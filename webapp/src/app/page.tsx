@@ -30,6 +30,12 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStatus, setGenerationStatus] = useState("");
 
+  // Batch State
+  const [batchSize, setBatchSize] = useState(1);
+  const [batchCount, setBatchCount] = useState(1);
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+  const [progress, setProgress] = useState({ value: 0, max: 0 });
+
   // Gallery Refresh State
   const [galleryRefresh, setGalleryRefresh] = useState(0);
 
@@ -50,63 +56,85 @@ export default function Home() {
   // WebSocket Logic for Status & Auto-Save
   const { lastMessage } = useComfyWebSocket();
 
-  // Watch for completion to auto-save
+  // Watch for progress and execution events
   useEffect(() => {
     if (!lastMessage) return;
 
-    if (lastMessage.type === 'status') {
-      // Queue info
-    } else if (lastMessage.type === 'executing' && lastMessage.data.node === null) {
-      setIsGenerating(false);
-      setGenerationStatus("Finished");
-      // We could trigger a delay refresh here, but better is to catch 'executed' or manual check
-    } else if (lastMessage.type === 'execution_success') {
-      // This implies completion. However, status check endpoint gives us the filename.
-      // Since the WS message might not have full filename info in standard format easily, 
-      // we rely on check_status logic OR we assume the generate flow handles "status check".
+    if (lastMessage.type === 'progress') {
+      setProgress({ value: lastMessage.data.value, max: lastMessage.data.max });
+    }
+
+    // Refresh Gallery on any completion event from WebSocket
+    if (lastMessage.type === 'executed' || (lastMessage.type === 'executing' && lastMessage.data.node === null)) {
+      setGalleryRefresh(prev => prev + 1);
     }
   }, [lastMessage]);
 
-  // Enhanced Generation Flow with Auto-Save
+  const waitForCompletion = async (promptId: string): Promise<any> => {
+    return new Promise((resolve) => {
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/comfy/status/${promptId}`);
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'completed' && (statusData.filename || statusData.filenames)) {
+            clearInterval(pollInterval);
+            resolve({ status: 'success', data: statusData });
+          } else if (statusData.status === 'failed') {
+            clearInterval(pollInterval);
+            resolve({ status: 'failed', error: 'Generation failed' });
+          }
+        } catch (e) {
+          console.error("Poll error", e);
+        }
+      }, 1000);
+    });
+  };
+
+  // Enhanced Generation Flow with Batch Support
   const handleGenerate = async () => {
     if (!positivePrompt) return;
 
     setIsGenerating(true);
-    setGenerationStatus("Queuing...");
+    setCurrentBatchIndex(0);
+    setProgress({ value: 0, max: 0 });
 
     try {
-      const request: GenerationRequest = {
-        positive_prompt: positivePrompt,
-        negative_prompt: negativePrompt,
-        width,
-        height,
-        model: selectedModel,
-        lora_names: selectedLoras,
-        steps,
-        cfg,
-        sampler_name: sampler,
-      };
+      for (let i = 0; i < batchCount; i++) {
+        setCurrentBatchIndex(i + 1);
+        setGenerationStatus(`Queuing Batch ${i + 1}/${batchCount}...`);
 
-      const res = await generateImage(request);
+        const request: GenerationRequest = {
+          positive_prompt: positivePrompt,
+          negative_prompt: negativePrompt,
+          width,
+          height,
+          model: selectedModel,
+          lora_names: selectedLoras,
+          steps,
+          cfg,
+          sampler_name: sampler,
+          batch_size: batchSize,
+        };
 
-      if (res.status === 'queued') {
-        setGenerationStatus(`Queued: ${res.prompt_id}`);
+        const res = await generateImage(request);
 
-        // Start polling for status to get filename for gallery
-        const pollInterval = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`/api/comfy/status/${res.prompt_id}`);
-            const statusData = await statusRes.json();
+        if (res.status === 'queued') {
+          setGenerationStatus(`Generating Batch ${i + 1}/${batchCount}...`);
 
-            if (statusData.status === 'completed' && statusData.filename) {
-              clearInterval(pollInterval);
-              setGenerationStatus("Completed");
-              setIsGenerating(false);
+          // Wait for completion
+          const result = await waitForCompletion(res.prompt_id);
 
-              // Auto-Save to Gallery
+          if (result.status === 'success') {
+            // Auto-Save to Gallery (Handle Batch)
+            const filesToSave = result.data.filenames && result.data.filenames.length > 0
+              ? result.data.filenames
+              : [result.data.filename];
+
+            for (const fname of filesToSave) {
               await saveToGallery({
-                filename: statusData.filename,
-                subfolder: statusData.subfolder || "", // Basic support for now
+                filename: fname,
+                subfolder: result.data.subfolder || "",
                 prompt_positive: positivePrompt,
                 prompt_negative: negativePrompt,
                 model: selectedModel,
@@ -115,27 +143,24 @@ export default function Home() {
                 steps,
                 cfg,
               });
-
-              // Refresh Gallery
-              setGalleryRefresh(prev => prev + 1);
-            } else if (statusData.status === 'failed') {
-              clearInterval(pollInterval);
-              setGenerationStatus("Failed");
-              setIsGenerating(false);
             }
-          } catch (e) {
-            console.error("Poll error", e);
-          }
-        }, 1000);
 
-      } else {
-        setGenerationStatus("Failed to queue");
-        setIsGenerating(false);
+            // Refresh Gallery
+            setGalleryRefresh(prev => prev + 1);
+          } else {
+            setGenerationStatus(`Batch ${i + 1} Failed`);
+          }
+        } else {
+          setGenerationStatus("Failed to queue");
+        }
       }
+      setGenerationStatus("Finished");
     } catch (e) {
       console.error(e);
       setGenerationStatus("Error sending request");
+    } finally {
       setIsGenerating(false);
+      setProgress({ value: 0, max: 0 });
     }
   };
 
@@ -320,13 +345,80 @@ export default function Home() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-white/70">Batch Size</span>
+                    <span className="text-xs font-medium text-emerald-400">{batchSize}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="4"
+                    value={batchSize}
+                    onChange={(e) => setBatchSize(Number(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-white/70">Batch Count</span>
+                    <span className="text-xs font-medium text-emerald-400">{batchCount}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={batchCount}
+                    onChange={(e) => setBatchCount(Number(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                  />
+                </div>
+              </div>
+
               <button
                 className={`btn-primary w-full mt-4 ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow'}`}
                 onClick={handleGenerate}
                 disabled={isGenerating}
               >
-                {isGenerating ? `Generating... (${generationStatus})` : '🎨 Generate Image'}
+                {isGenerating ? 'Computing...' : '🎨 Generate Image'}
               </button>
+
+              {isGenerating && (
+                <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10 animate-fade-in space-y-3">
+                  <div className="flex justify-between items-center text-xs text-white/70">
+                    <span>{generationStatus}</span>
+                  </div>
+
+                  {/* Batch Progress */}
+                  <div>
+                    <div className="flex justify-between text-[10px] text-white/50 mb-1">
+                      <span>Image {currentBatchIndex} / {batchCount}</span>
+                      <span>{Math.round((currentBatchIndex / batchCount) * 100)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500/50 transition-all duration-500"
+                        style={{ width: `${(currentBatchIndex / batchCount) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Step Progress */}
+                  <div>
+                    <div className="flex justify-between text-[10px] text-white/50 mb-1">
+                      <span>Steps {progress.value} / {progress.max || steps}</span>
+                      <span>{progress.max ? Math.round((progress.value / progress.max) * 100) : 0}%</span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-400 transition-all duration-300"
+                        style={{ width: `${progress.max ? (progress.value / progress.max) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

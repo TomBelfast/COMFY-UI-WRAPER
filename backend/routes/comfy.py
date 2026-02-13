@@ -37,6 +37,7 @@ class ImageGenerateRequest(BaseModel):
     steps: int = 8
     cfg: float = 1.0
     sampler_name: str = "res_multistep"
+    batch_size: int = 1
 
 
 class ImageStatusResponse(BaseModel):
@@ -45,6 +46,7 @@ class ImageStatusResponse(BaseModel):
     status: str
     ready: bool
     filename: Optional[str] = None
+    filenames: List[str] = Field(default_factory=list)
     subfolder: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: List[str] = Field(default_factory=list)
@@ -120,9 +122,10 @@ def build_workflow(request: ImageGenerateRequest) -> Dict[str, Any]:
         workflow["2"]["inputs"]["text"] = request.positive_prompt
         workflow["3"]["inputs"]["text"] = request.negative_prompt
 
-    # 3. Set Dimensions (Latent Image)
+    # 3. Set Dimensions (Latent Image) and Batch Size
     workflow["4"]["inputs"]["width"] = request.width
     workflow["4"]["inputs"]["height"] = request.height
+    workflow["4"]["inputs"]["batch_size"] = request.batch_size
 
     # 4. Set Sampler (Seed, Steps, CFG)
     sampler_node_id = "5"
@@ -266,6 +269,7 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db)) -> ImageSt
             # Get images
             outputs = prompt_data.get("outputs", {})
             image_urls = []
+            filenames = []
             first_filename = None
             
             for node_id in ["7", "11", "10", "9"]:
@@ -273,8 +277,12 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db)) -> ImageSt
                     for img in outputs[node_id]["images"]:
                         filename = img.get("filename", "")
                         subfolder = img.get("subfolder", "")
+                        
+                        filenames.append(filename)
+
                         if not first_filename:
                             first_filename = filename
+                        
                         url_img = f"/api/comfy/image?filename={filename}&type=output"
                         if subfolder:
                             url_img += f"&subfolder={subfolder}"
@@ -286,6 +294,7 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db)) -> ImageSt
                 status="completed",
                 ready=True,
                 filename=first_filename,
+                filenames=filenames,
                 subfolder=img.get("subfolder", "") if first_filename else "",
                 image_url=image_urls[0] if image_urls else None,
                 image_urls=image_urls

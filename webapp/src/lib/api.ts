@@ -58,6 +58,7 @@ export interface GenerationRequest {
     sampler_name?: string;
     model?: string;
     lora_names?: string[];
+    batch_size?: number;
 }
 
 export const fetchHealth = async (): Promise<ComfyStatus> => {
