@@ -1,0 +1,33 @@
+---
+description: Critical rules for development workflow, process management, and logging in ComfyUI Wrapper
+globs: ["**/*.py", "**/*.tsx", "**/*.sh", "**/*.bat"]
+---
+
+# Development Workflow & Logging Rules
+
+## 🔴 CRITICAL: Process Management
+
+1.  **Clean Restarts**: Before starting a new server (Backend or Frontend), ALWAYS ensure the previous process is killed.
+    -   Verify the port is free before starting.
+    -   Confirm termination to the user: "Closed previous process on port [PORT]. Starting new..."
+2.  **Fixed Ports**: NEVER use alternative ports if a port is busy. Always kill the process on the required port.
+    -   Backend: `8000`
+    -   Frontend: `3300`
+3.  **Debug Mode**: During development, ALWAYS run both servers in `verbose` and `debug` mode.
+    -   FastAPI: `uvicorn main:app --reload --log-level debug`
+    -   Next.js: Use default dev mode which is verbose enough.
+
+## 📝 Logging Standards
+
+1.  **Loguru Integration**: Use `loguru` for all backend logging.
+2.  **Real-time Streaming**: All backend logs must be streamed via the `/api/logs/ws` WebSocket endpoint.
+3.  **Frontend Visibility**: Ensure the `LogViewer` component is active during generation so the user knows exactly what the system is doing.
+4.  **Verbose ComfyUI**: If possible, capture and proxy ComfyUI output to the main log stream.
+
+## 🚀 Execution Workflow
+
+When the user asks to "run", "start", or "restart" the application:
+1.  **ALWAYS** use the script `/root/APLIKACJE/COMFY-UI-WRAPER/restart_app.sh`.
+2.  If on Windows, use `start-dev.bat`.
+3.  Before execution, confirm to the user: "Killing previous processes on ports 8000 and 3300 and performing a clean restart."
+4.  Ensure `LOGURU_LEVEL=DEBUG` is active.

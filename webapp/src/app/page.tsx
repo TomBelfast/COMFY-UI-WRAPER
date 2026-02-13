@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Header from "@/components/Header";
 import ModelSelector from "@/components/ModelSelector";
 import Gallery from "@/components/Gallery";
+import LogViewer from "@/components/LogViewer";
 import {
   generateImage,
   GenerationRequest,
@@ -19,8 +20,11 @@ import {
 export default function Home() {
   const [positivePrompt, setPositivePrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [width, setWidth] = useState(1344);
-  const [height, setHeight] = useState(768);
+  const [width, setWidth] = useState(1088);
+  const [height, setHeight] = useState(1920);
+  const [steps, setSteps] = useState(8);
+  const [cfg, setCfg] = useState(1.0);
+  const [sampler, setSampler] = useState("res_multistep");
   const [selectedModel, setSelectedModel] = useState("Loading...");
   const [selectedLoras, setSelectedLoras] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -78,8 +82,9 @@ export default function Home() {
         height,
         model: selectedModel,
         lora_names: selectedLoras,
-        steps: 20, // Default useful steps
-        cfg: 7,
+        steps,
+        cfg,
+        sampler_name: sampler,
       };
 
       const res = await generateImage(request);
@@ -107,8 +112,8 @@ export default function Home() {
                 model: selectedModel,
                 width,
                 height,
-                steps: 20,
-                cfg: 7
+                steps,
+                cfg,
               });
 
               // Refresh Gallery
@@ -145,8 +150,8 @@ export default function Home() {
         loras: selectedLoras,
         width,
         height,
-        steps: 20,
-        cfg: 7,
+        steps,
+        cfg,
       });
       setShowSavePreset(false);
       setPresetName("");
@@ -164,6 +169,8 @@ export default function Home() {
     if (preset.loras) setSelectedLoras(preset.loras);
     if (preset.width) setWidth(preset.width);
     if (preset.height) setHeight(preset.height);
+    if (preset.steps) setSteps(preset.steps);
+    if (preset.cfg) setCfg(preset.cfg);
   };
 
   // Load from Gallery
@@ -173,6 +180,8 @@ export default function Home() {
     if (item.model) setSelectedModel(item.model);
     if (item.width) setWidth(item.width);
     if (item.height) setHeight(item.height);
+    if (item.steps) setSteps(item.steps);
+    if (item.cfg) setCfg(item.cfg);
   };
 
   const handleDeletePreset = async (name: string, e: React.MouseEvent) => {
@@ -200,7 +209,7 @@ export default function Home() {
       <main className="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Prompt Builder */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="glass-card card-3d-cinematic p-6 animate-fade-in-up stagger-1 relative">
+          <div className={`glass-card card-3d-cinematic p-6 animate-fade-in-up stagger-1 relative ${isGenerating ? 'snake-active' : ''}`}>
 
             {/* Action Bar */}
             <div className="absolute top-6 right-6 flex gap-2 z-10">
@@ -274,26 +283,40 @@ export default function Home() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-label block mb-2">Width</label>
-                  <input
-                    type="number"
-                    className="input-glass w-full"
-                    value={width}
-                    onChange={(e) => setWidth(Number(e.target.value))}
-                    suppressHydrationWarning
-                  />
-                </div>
-                <div>
-                  <label className="text-label block mb-2">Height</label>
-                  <input
-                    type="number"
-                    className="input-glass w-full"
-                    value={height}
-                    onChange={(e) => setHeight(Number(e.target.value))}
-                    suppressHydrationWarning
-                  />
+              <div>
+                <label className="text-label block mb-2">Aspect Ratio</label>
+                <div className="flex gap-3 items-end">
+                  {/* 9:16 Portrait */}
+                  <button
+                    type="button"
+                    onClick={() => { setWidth(1088); setHeight(1920); }}
+                    className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg border transition-all ${width === 1088 && height === 1920 ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.3)]' : 'border-white/10 bg-white/5 hover:border-white/30'}`}
+                  >
+                    <div className={`w-5 h-8 rounded-sm border-2 ${width === 1088 && height === 1920 ? 'border-emerald-400' : 'border-white/40'}`} />
+                    <span className={`text-[10px] font-mono ${width === 1088 && height === 1920 ? 'text-emerald-400' : 'text-white/50'}`}>9:16</span>
+                  </button>
+
+                  {/* 1:1 Square */}
+                  <button
+                    type="button"
+                    onClick={() => { setWidth(1280); setHeight(1280); }}
+                    className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg border transition-all ${width === 1280 && height === 1280 ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.3)]' : 'border-white/10 bg-white/5 hover:border-white/30'}`}
+                  >
+                    <div className={`w-7 h-7 rounded-sm border-2 ${width === 1280 && height === 1280 ? 'border-emerald-400' : 'border-white/40'}`} />
+                    <span className={`text-[10px] font-mono ${width === 1280 && height === 1280 ? 'text-emerald-400' : 'text-white/50'}`}>1:1</span>
+                  </button>
+
+                  {/* 16:9 Landscape */}
+                  <button
+                    type="button"
+                    onClick={() => { setWidth(1920); setHeight(1088); }}
+                    className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg border transition-all ${width === 1920 && height === 1088 ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.3)]' : 'border-white/10 bg-white/5 hover:border-white/30'}`}
+                  >
+                    <div className={`w-8 h-5 rounded-sm border-2 ${width === 1920 && height === 1088 ? 'border-emerald-400' : 'border-white/40'}`} />
+                    <span className={`text-[10px] font-mono ${width === 1920 && height === 1088 ? 'text-emerald-400' : 'text-white/50'}`}>16:9</span>
+                  </button>
+
+                  <span className="text-[10px] text-white/30 ml-auto font-mono self-center">{width}×{height}</span>
                 </div>
               </div>
 
@@ -306,6 +329,9 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          {/* Gallery - Moved here */}
+          <Gallery refreshTrigger={galleryRefresh} onSelect={handleLoadGalleryItem} />
         </div>
 
         {/* Side Panel - Model Selection & Gallery */}
@@ -322,23 +348,77 @@ export default function Home() {
             <span className="text-label">Generation</span>
             <h3 className="text-title text-xl mt-2 mb-4">Settings</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-white/70">Steps</span>
-                <span className="text-sm font-medium text-emerald-400">20</span>
+              {/* Steps Slider */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-white/70">Steps</span>
+                  <span className="text-sm font-medium text-emerald-400">{steps}</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={steps}
+                  onChange={(e) => setSteps(Number(e.target.value))}
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-white/70">CFG Scale</span>
-                <span className="text-sm font-medium text-emerald-400">7.0</span>
+
+              {/* CFG Slider */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-white/70">CFG Scale</span>
+                  <span className="text-sm font-medium text-emerald-400">{cfg}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  step="0.1"
+                  value={cfg}
+                  onChange={(e) => setCfg(Number(e.target.value))}
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-white/70">Sampler</span>
-                <span className="text-sm font-medium text-emerald-400">DPM++ 2M SDE</span>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-white/70">Sampler</span>
+                </div>
+                <select
+                  value={sampler}
+                  onChange={(e) => setSampler(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-emerald-400 focus:border-emerald-500/50 focus:outline-none appearance-none cursor-pointer"
+                >
+                  <option value="res_multistep">res_multistep</option>
+                  <option value="euler">euler</option>
+                  <option value="euler_ancestral">euler_ancestral</option>
+                  <option value="heun">heun</option>
+                  <option value="heunpp2">heunpp2</option>
+                  <option value="dpm_2">dpm_2</option>
+                  <option value="dpm_2_ancestral">dpm_2_ancestral</option>
+                  <option value="lms">lms</option>
+                  <option value="dpm_fast">dpm_fast</option>
+                  <option value="dpm_adaptive">dpm_adaptive</option>
+                  <option value="dpmpp_2s_ancestral">dpmpp_2s_ancestral</option>
+                  <option value="dpmpp_sde">dpmpp_sde</option>
+                  <option value="dpmpp_sde_gpu">dpmpp_sde_gpu</option>
+                  <option value="dpmpp_2m">dpmpp_2m</option>
+                  <option value="dpmpp_2m_sde">dpmpp_2m_sde</option>
+                  <option value="dpmpp_2m_sde_gpu">dpmpp_2m_sde_gpu</option>
+                  <option value="dpmpp_3m_sde">dpmpp_3m_sde</option>
+                  <option value="dpmpp_3m_sde_gpu">dpmpp_3m_sde_gpu</option>
+                  <option value="ddpm">ddpm</option>
+                  <option value="lcm">lcm</option>
+                  <option value="ddim">ddim</option>
+                  <option value="uni_pc">uni_pc</option>
+                  <option value="uni_pc_bh2">uni_pc_bh2</option>
+                </select>
               </div>
             </div>
           </div>
 
-          {/* Gallery */}
-          <Gallery refreshTrigger={galleryRefresh} onSelect={handleLoadGalleryItem} />
+
         </div>
       </main>
 
@@ -346,6 +426,8 @@ export default function Home() {
       <footer className="p-4 text-center text-white/30 text-xs">
         ComfyUI Wrapper v0.1.0 | Cinematic Matrix UI
       </footer>
+      {/* Log Stream */}
+      <LogViewer />
     </div>
   );
 }

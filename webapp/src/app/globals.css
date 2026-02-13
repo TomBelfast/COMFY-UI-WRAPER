@@ -292,3 +292,67 @@ body {
 .stagger-4 {
   animation-delay: 0.4s;
 }
+
+/* ============================================
+   SNAKE BORDER EFFECT
+   ============================================ */
+
+@property --snake-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.snake-active {
+  position: relative;
+  /* Restore glass effect (remove opaque background override) */
+  border-color: transparent !important;
+}
+
+.snake-active::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  /* Slightly larger for glow */
+  background: conic-gradient(from var(--snake-angle), transparent 60%, var(--emerald-mid), var(--emerald-light), var(--emerald-mid));
+  border-radius: 18px;
+  z-index: -1;
+  animation: snake-spin 3s linear infinite;
+  filter: blur(8px);
+  opacity: 0.6;
+
+  /* Mask to create border only */
+  padding: 3px;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+}
+
+.snake-active::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  /* Sharp line */
+  background: conic-gradient(from var(--snake-angle), transparent 60%, var(--emerald-mid), var(--emerald-light), var(--emerald-mid));
+  border-radius: 17px;
+  z-index: -1;
+  animation: snake-spin 3s linear infinite;
+
+  /* Mask to create border only */
+  padding: 1px;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+}
+
+@keyframes snake-spin {
+  from {
+    --snake-angle: 0deg;
+  }
+
+  to {
+    --snake-angle: 360deg;
+  }
+}

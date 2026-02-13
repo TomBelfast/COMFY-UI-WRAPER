@@ -28,12 +28,12 @@ class GalleryItemResponse(GalleryItemCreate):
     class Config:
         orm_mode = True
 
-@router.get("/", response_model=List[GalleryItemResponse])
+@router.get("", response_model=List[GalleryItemResponse])
 def get_gallery(limit: int = 50, db: Session = Depends(get_db)):
     """Get gallery images, newest first."""
     return db.query(GalleryImage).order_by(desc(GalleryImage.created_at)).limit(limit).all()
 
-@router.post("/", response_model=GalleryItemResponse)
+@router.post("", response_model=GalleryItemResponse)
 def add_to_gallery(item: GalleryItemCreate, db: Session = Depends(get_db)):
     """Save an image reference to gallery."""
     db_item = GalleryImage(

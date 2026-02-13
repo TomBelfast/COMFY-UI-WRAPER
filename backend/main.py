@@ -14,12 +14,12 @@ from services.websocket_manager import get_manager
 from routes.comfy import DEFAULT_COMFYUI_URL
 from database import init_db, SessionLocal, AppConfig
 
-# Configure verbose logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+from services.logging_service import log_manager
+from fastapi import WebSocket, WebSocketDisconnect
+
+# Set up loguru and intercept standard logging
+log_manager.setup_logging()
+from loguru import logger
 
 app = FastAPI(
     title="ComfyUI Wrapper API",
@@ -29,6 +29,9 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup_event():
+    # Set loop for logging
+    log_manager.loop = asyncio.get_running_loop()
+    
     # Initialize DB
     init_db()
     
@@ -76,3 +79,16 @@ async def health_check():
 async def root():
     """Root endpoint."""
     return {"message": "ComfyUI Wrapper API", "docs": "/docs"}
+
+@app.websocket("/api/logs/ws")
+async def logs_websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time log streaming."""
+    await websocket.accept()
+    logger.info("New client connected to log stream")
+    try:
+        async for log_entry in log_manager.subscribe():
+            await websocket.send_json(log_entry)
+    except WebSocketDisconnect:
+        logger.info("Client disconnected from log stream")
+    except Exception as e:
+        logger.error(f"Error in logs WebSocket: {e}")

@@ -29,13 +29,14 @@ class ImageGenerateRequest(BaseModel):
     """Request to generate an image."""
     positive_prompt: str
     negative_prompt: str = "blurry, low quality, text, watermark"
-    width: int = 1344
-    height: int = 768
+    width: int = 1088
+    height: int = 1920
     model: Optional[str] = None
     loras_names: Optional[List[str]] = None
     lora_names: Optional[List[str]] = None # Backwards compatibility
     steps: int = 8
-    cfg: float = 1.5
+    cfg: float = 1.0
+    sampler_name: str = "res_multistep"
 
 
 class ImageStatusResponse(BaseModel):
@@ -44,22 +45,32 @@ class ImageStatusResponse(BaseModel):
     status: str
     ready: bool
     filename: Optional[str] = None
+    subfolder: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: List[str] = Field(default_factory=list)
 
 
-# Z-Image Turbo workflow template (AuraFlow)
-Z_IMAGE_WORKFLOW = {
-    "1": {"inputs": {"unet_name": "zImageTurboFP8Kijai_fp8ScaledE4m3fn.safetensors", "weight_dtype": "default"}, "class_type": "UNETLoader"},
-    "2": {"inputs": {"clip_name": "qwen_3_4b.safetensors", "type": "lumina2", "device": "default"}, "class_type": "CLIPLoader"},
-    "3": {"inputs": {"vae_name": "ae.safetensors"}, "class_type": "VAELoader"},
-    "4": {"inputs": {"width": 1344, "height": 768, "batch_size": 1}, "class_type": "EmptySD3LatentImage"},
-    "5": {"inputs": {"shift": 3, "model": ["1", 0]}, "class_type": "ModelSamplingAuraFlow"},
-    "7": {"inputs": {"text": "", "clip": ["2", 0]}, "class_type": "CLIPTextEncode"},
-    "8": {"inputs": {"conditioning": ["7", 0]}, "class_type": "ConditioningZeroOut"},
-    "9": {"inputs": {"seed": 0, "steps": 8, "cfg": 1.5, "sampler_name": "dpmpp_2m_sde", "scheduler": "simple", "denoise": 1, "model": ["5", 0], "positive": ["7", 0], "negative": ["8", 0], "latent_image": ["4", 0]}, "class_type": "KSampler"},
-    "10": {"inputs": {"samples": ["9", 0], "vae": ["3", 0]}, "class_type": "VAEDecode"},
-    "11": {"inputs": {"filename_prefix": "comfy_wrapper_", "images": ["10", 0]}, "class_type": "SaveImage"}
+# Z-Image Turbo AIO Workflow (All-In-One checkpoint)
+# Based on: workflow/Projekt_generowanie_zdjec_z_image_turbo_AIO.json
+TURBO_AIO_WORKFLOW = {
+    "1": {"inputs": {"ckpt_name": "z-image-turbo-bf16-aio.safetensors"}, "class_type": "CheckpointLoaderSimple"},
+    "2": {"inputs": {"text": "", "clip": ["1", 1]}, "class_type": "CLIPTextEncode"},
+    "3": {"inputs": {"conditioning": ["2", 0]}, "class_type": "ConditioningZeroOut"},
+    "4": {"inputs": {"width": 1088, "height": 1920, "batch_size": 1}, "class_type": "EmptySD3LatentImage"},
+    "5": {"inputs": {"seed": 0, "steps": 8, "cfg": 1, "sampler_name": "res_multistep", "scheduler": "simple", "denoise": 1, "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0]}, "class_type": "KSampler"},
+    "6": {"inputs": {"samples": ["5", 0], "vae": ["1", 2]}, "class_type": "VAEDecode"},
+    "7": {"inputs": {"filename_prefix": "comfy_wrapper_", "images": ["6", 0]}, "class_type": "SaveImage"}
+}
+
+# Standard Basic Workflow (SD1.5 / SDXL)
+BASIC_WORKFLOW = {
+    "1": {"inputs": {"ckpt_name": "v1-5-pruned-emaonly.ckpt"}, "class_type": "CheckpointLoaderSimple"},
+    "2": {"inputs": {"text": "(positive prompt)", "clip": ["1", 1]}, "class_type": "CLIPTextEncode"},
+    "3": {"inputs": {"text": "(negative prompt)", "clip": ["1", 1]}, "class_type": "CLIPTextEncode"},
+    "4": {"inputs": {"width": 512, "height": 512, "batch_size": 1}, "class_type": "EmptyLatentImage"},
+    "5": {"inputs": {"seed": 0, "steps": 20, "cfg": 8.0, "sampler_name": "euler", "scheduler": "normal", "denoise": 1, "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0]}, "class_type": "KSampler"},
+    "6": {"inputs": {"samples": ["5", 0], "vae": ["1", 2]}, "class_type": "VAEDecode"},
+    "7": {"inputs": {"filename_prefix": "comfy_basic_", "images": ["6", 0]}, "class_type": "SaveImage"}
 }
 
 # Standard Flux Dev Workflow
@@ -82,54 +93,46 @@ def build_workflow(request: ImageGenerateRequest) -> Dict[str, Any]:
     import json
     
     # Select Base Workflow based on model name
-    # Default to Z-Image if not specified or unknown
-    base_workflow = Z_IMAGE_WORKFLOW
-    workflow_type = "zimage"
-    
     model_name = request.model or ""
+    
     if "flux" in model_name.lower():
         base_workflow = FLUX_WORKFLOW
         workflow_type = "flux"
+    elif "basic" in model_name.lower() or "v1-5" in model_name.lower():
+        base_workflow = BASIC_WORKFLOW
+        workflow_type = "basic"
+    else:
+        # Default: Turbo AIO workflow
+        base_workflow = TURBO_AIO_WORKFLOW
+        workflow_type = "turbo_aio"
     
     workflow = json.loads(json.dumps(base_workflow))
     
-    # 1. Set Models
-    if workflow_type == "zimage":
-        # Z-Image uses UNETLoader (Node 1)
-        if model_name:
-            workflow["1"]["inputs"]["unet_name"] = model_name
-    elif workflow_type == "flux":
-        # Flux uses CheckpointLoaderSimple (Node 1)
-        if model_name:
-            workflow["1"]["inputs"]["ckpt_name"] = model_name
+    # 1. Set Model (all types use CheckpointLoaderSimple at Node 1)
+    if model_name:
+        workflow["1"]["inputs"]["ckpt_name"] = model_name
 
     # 2. Set Prompt
-    # Z-Image: Node 7 positive
-    # Flux: Node 2 positive, Node 3 negative
-    if workflow_type == "zimage":
-        workflow["7"]["inputs"]["text"] = request.positive_prompt
-    elif workflow_type == "flux":
+    if workflow_type == "turbo_aio":
+        # Turbo AIO: Node 2 = positive prompt (negative is ConditioningZeroOut)
+        workflow["2"]["inputs"]["text"] = request.positive_prompt
+    elif workflow_type in ["flux", "basic"]:
         workflow["2"]["inputs"]["text"] = request.positive_prompt
         workflow["3"]["inputs"]["text"] = request.negative_prompt
 
-    # 3. Set Dimensions (Latent)
-    # Z-Image: Node 4 (EmptySD3LatentImage)
-    # Flux: Node 4 (EmptyLatentImage)
+    # 3. Set Dimensions (Latent Image)
     workflow["4"]["inputs"]["width"] = request.width
     workflow["4"]["inputs"]["height"] = request.height
 
     # 4. Set Sampler (Seed, Steps, CFG)
-    # Z-Image: Node 9
-    # Flux: Node 5
-    sampler_node_id = "9" if workflow_type == "zimage" else "5"
+    sampler_node_id = "5"
     if sampler_node_id in workflow:
         workflow[sampler_node_id]["inputs"]["seed"] = random.randint(0, 2**53 - 1)
         workflow[sampler_node_id]["inputs"]["steps"] = request.steps
         workflow[sampler_node_id]["inputs"]["cfg"] = request.cfg
+        workflow[sampler_node_id]["inputs"]["sampler_name"] = request.sampler_name
 
-    # 5. Add LoRAs (Generic chaining)
-    # Both Z-Image (ModelSamplingAuraFlow) and Flux (KSampler) take 'model' at Node 5.
-    # Both start with model at Node 1.
+    # 5. Add LoRAs (chain from model Node 1)
     lora_list = request.lora_names or request.loras_names
     if lora_list:
         last_node_id = "1"
@@ -143,12 +146,9 @@ def build_workflow(request: ImageGenerateRequest) -> Dict[str, Any]:
                 },
                 "class_type": "LoraLoaderModelOnly"
             }
-            # Flux might need standard LoraLoader if clip is also needed, strictly sticking to ModelOnly for now
-            # as Z-Image used it. For Flux it might reduce CLIP strength effectively by not touching it.
             last_node_id = node_id
         
-        # Connect items to the final model consumer
-        # Node 5 is ModelSamplingAuraFlow (Z-Image) or KSampler (Flux)
+        # Connect last LoRA output to KSampler (Node 5)
         if "5" in workflow and "inputs" in workflow["5"]:
             workflow["5"]["inputs"]["model"] = [last_node_id, 0]
     
@@ -268,7 +268,7 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db)) -> ImageSt
             image_urls = []
             first_filename = None
             
-            for node_id in ["11", "10", "9"]:
+            for node_id in ["7", "11", "10", "9"]:
                 if node_id in outputs and "images" in outputs[node_id]:
                     for img in outputs[node_id]["images"]:
                         filename = img.get("filename", "")
@@ -286,6 +286,7 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db)) -> ImageSt
                 status="completed",
                 ready=True,
                 filename=first_filename,
+                subfolder=img.get("subfolder", "") if first_filename else "",
                 image_url=image_urls[0] if image_urls else None,
                 image_urls=image_urls
             )
@@ -384,6 +385,18 @@ async def interrupt_generation(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
 
+
+@router.post("/clear-vram")
+async def clear_vram(db: Session = Depends(get_db)):
+    """Clear ComfyUI VRAM and RAM."""
+    url = get_comfy_url(db)
+    try:
+        async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
+            # ComfyUI has a /free endpoint that clears memory
+            await client.post(f"{url}/free", json={"unload_models": True, "free_memory": True})
+            return {"status": "cleared", "message": "VRAM and RAM cleared"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 from fastapi import WebSocket, WebSocketDisconnect
 from services.websocket_manager import get_manager

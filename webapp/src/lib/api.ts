@@ -13,30 +13,26 @@ const getBaseUrl = () => {
 
 export const getBackendUrl = getBaseUrl;
 
+const getApiBaseUrl = () => `${getBaseUrl()}/api/comfy`;
+const getStoreUrl = () => `${getBaseUrl()}/api/store`;
 const getWsUrl = () => {
     if (typeof window !== 'undefined') {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.host; // includes port if present
-
-        // If we're on a standard web domain (aliased), we might want to stay on the same port/protocol host
-        // but if we hardcode 8000, it breaks on HTTPS domains where 8000 isn't proxied or lacks SSL.
-        // For production domains like candy.aihub.ovh, it's safer to use the same host/protocol.
-        // On localhost:3300, we need to target :8000 specifically.
-
+        const host = window.location.host;
         if (host.includes('localhost') || host.includes('127.0.0.1')) {
-            return `${protocol}//${window.location.hostname}:8000`;
+            return `${protocol}//${window.location.hostname}:8000/api/comfy/ws`;
         }
-
-        // For production, if there's no port 8000 in the URL, don't add it.
-        // This assumes the reverse proxy handles /api/comfy/ws
-        return `${protocol}//${host}`;
+        return `${protocol}//${host}/api/comfy/ws`;
     }
-    return 'ws://localhost:8000';
+    return 'ws://localhost:8000/api/comfy/ws';
 };
+const getGalleryUrl = () => `${getBaseUrl()}/api/gallery`;
 
-const API_BASE_URL = `${getBaseUrl()}/api/comfy`;
-const STORE_URL = `${getBaseUrl()}/api/store`;
-const WS_BASE_URL = `${getWsUrl()}/api/comfy/ws`;
+export const getImageUrl = (filename: string, subfolder: string = "", type: string = "output") => {
+    let url = `${getApiBaseUrl()}/image?filename=${filename}&type=${type}`;
+    if (subfolder) url += `&subfolder=${subfolder}`;
+    return url;
+};
 
 export interface ComfyStatus {
     status: string;
@@ -59,13 +55,14 @@ export interface GenerationRequest {
     height?: number;
     steps?: number;
     cfg?: number;
+    sampler_name?: string;
     model?: string;
     lora_names?: string[];
 }
 
 export const fetchHealth = async (): Promise<ComfyStatus> => {
     try {
-        const res = await fetch(`${API_BASE_URL}/health`);
+        const res = await fetch(`${getApiBaseUrl()}/health`);
         return await res.json();
     } catch (e) {
         return { status: 'disconnected', comfyui_url: '', devices: [] };
@@ -73,19 +70,19 @@ export const fetchHealth = async (): Promise<ComfyStatus> => {
 };
 
 export const fetchModels = async (): Promise<string[]> => {
-    const res = await fetch(`${API_BASE_URL}/models`);
+    const res = await fetch(`${getApiBaseUrl()}/models`);
     const data: ModelList = await res.json();
     return data.models || [];
 };
 
 export const fetchLoras = async (): Promise<string[]> => {
-    const res = await fetch(`${API_BASE_URL}/loras`);
+    const res = await fetch(`${getApiBaseUrl()}/loras`);
     const data: LoraList = await res.json();
     return data.loras || [];
 };
 
 export const generateImage = async (req: GenerationRequest) => {
-    const res = await fetch(`${API_BASE_URL}/generate`, {
+    const res = await fetch(`${getApiBaseUrl()}/generate`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -94,9 +91,6 @@ export const generateImage = async (req: GenerationRequest) => {
     });
     return await res.json();
 };
-
-// Persistence API
-// const STORE_URL defined at top
 
 export interface GenerationPreset {
     id?: number;
@@ -113,7 +107,7 @@ export interface GenerationPreset {
 
 export const fetchConfig = async (key: string): Promise<string | null> => {
     try {
-        const res = await fetch(`${STORE_URL}/config/${key}`);
+        const res = await fetch(`${getStoreUrl()}/config/${key}`);
         if (!res.ok) return null;
         const data = await res.json();
         return data.value;
@@ -123,7 +117,7 @@ export const fetchConfig = async (key: string): Promise<string | null> => {
 };
 
 export const saveConfig = async (key: string, value: string) => {
-    await fetch(`${STORE_URL}/config`, {
+    await fetch(`${getStoreUrl()}/config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value }),
@@ -132,7 +126,7 @@ export const saveConfig = async (key: string, value: string) => {
 
 export const fetchPresets = async (): Promise<GenerationPreset[]> => {
     try {
-        const res = await fetch(`${STORE_URL}/presets`);
+        const res = await fetch(`${getStoreUrl()}/presets`);
         return await res.json();
     } catch (e) {
         return [];
@@ -140,7 +134,7 @@ export const fetchPresets = async (): Promise<GenerationPreset[]> => {
 };
 
 export const savePreset = async (preset: GenerationPreset) => {
-    const res = await fetch(`${STORE_URL}/presets`, {
+    const res = await fetch(`${getStoreUrl()}/presets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(preset),
@@ -150,7 +144,7 @@ export const savePreset = async (preset: GenerationPreset) => {
 };
 
 export const deletePreset = async (name: string) => {
-    await fetch(`${STORE_URL}/presets/${name}`, {
+    await fetch(`${getStoreUrl()}/presets/${name}`, {
         method: 'DELETE',
     });
 };
@@ -161,7 +155,7 @@ export const useComfyWebSocket = () => {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        const ws = new WebSocket(WS_BASE_URL);
+        const ws = new WebSocket(getWsUrl());
 
         ws.onopen = () => {
             console.log('Connected to WebSocket');
@@ -192,9 +186,6 @@ export const useComfyWebSocket = () => {
     return { socket, lastMessage, isConnected };
 };
 
-// Gallery API
-const GALLERY_URL = `${getBaseUrl()}/api/gallery`;
-
 export interface GalleryItem {
     id: number;
     filename: string;
@@ -223,7 +214,7 @@ export interface GalleryItemCreate {
 
 export const fetchGallery = async (): Promise<GalleryItem[]> => {
     try {
-        const res = await fetch(`${GALLERY_URL}/`);
+        const res = await fetch(`${getGalleryUrl()}`);
         return await res.json();
     } catch (e) {
         return [];
@@ -231,7 +222,7 @@ export const fetchGallery = async (): Promise<GalleryItem[]> => {
 };
 
 export const saveToGallery = async (item: GalleryItemCreate) => {
-    await fetch(`${GALLERY_URL}/`, {
+    await fetch(`${getGalleryUrl()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item),
@@ -239,7 +230,14 @@ export const saveToGallery = async (item: GalleryItemCreate) => {
 };
 
 export const deleteFromGallery = async (id: number) => {
-    await fetch(`${GALLERY_URL}/${id}`, {
+    await fetch(`${getGalleryUrl()}/${id}`, {
         method: 'DELETE',
     });
+};
+
+export const clearVram = async () => {
+    const res = await fetch(`${getApiBaseUrl()}/clear-vram`, {
+        method: 'POST',
+    });
+    return await res.json();
 };

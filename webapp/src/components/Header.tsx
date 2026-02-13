@@ -5,13 +5,15 @@ import { useState, useEffect } from "react";
 interface ComfyStatus {
     status: "connected" | "disconnected" | "checking";
     comfyui_url?: string;
-    devices?: { name: string; type: string; vram_total?: number }[];
+    devices?: { name: string; type: string; vram_total?: number; vram_free?: number }[];
 }
 
+import { clearVram } from '@/lib/api';
 import SettingsModal from "./SettingsModal";
 
 export default function Header() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isClearing, setIsClearing] = useState(false);
     const [comfyStatus, setComfyStatus] = useState<ComfyStatus>({
         status: "checking",
     });
@@ -34,8 +36,8 @@ export default function Header() {
         // Check immediately
         checkConnection();
 
-        // Check every 10 seconds
-        const interval = setInterval(checkConnection, 10000);
+        // Check every 2 seconds for real-time VRAM
+        const interval = setInterval(checkConnection, 2000);
 
         return () => clearInterval(interval);
     }, []);
@@ -50,6 +52,25 @@ export default function Header() {
         connected: "ComfyUI Online",
         disconnected: "ComfyUI Offline",
         checking: "Sprawdzam...",
+    };
+
+    const handleClearVram = async () => {
+        if (!confirm("Are you sure you want to clear ComfyUI VRAM?")) return;
+        setIsClearing(true);
+        try {
+            await clearVram();
+            alert("VRAM Cleared Successfully");
+        } catch (e) {
+            alert("Failed to clear VRAM");
+        } finally {
+            setIsClearing(false);
+        }
+    };
+
+    const formatVram = (total: number, free: number) => {
+        const used = total - free;
+        const toGB = (bytes: number) => (bytes / 1024 / 1024 / 1024).toFixed(1);
+        return `${toGB(used)} / ${toGB(total)} GB`;
     };
 
     return (
@@ -83,17 +104,28 @@ export default function Header() {
                             )}
                         </div>
                         {comfyStatus.devices && comfyStatus.devices.length > 0 && (
-                            <div className="ml-2 px-2 py-1 rounded bg-emerald-500/20 border border-emerald-500/30">
-                                <span className="text-xs text-emerald-400">
-                                    {comfyStatus.devices[0].name?.split(" ")[0] || "GPU"}
+                            <div className="ml-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col items-end min-w-[140px]">
+                                <span className="text-[10px] text-emerald-500/70 font-bold tracking-widest uppercase mb-1">
+                                    {comfyStatus.devices[0].name?.split(" ")[0] || "GPU"} MEMORY
                                 </span>
+                                {comfyStatus.devices[0].vram_total && comfyStatus.devices[0].vram_free !== undefined && (
+                                    <span className="text-lg text-emerald-400 font-bold font-mono tracking-tight leading-none drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">
+                                        {formatVram(comfyStatus.devices[0].vram_total, comfyStatus.devices[0].vram_free)}
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>
 
                     {/* Navigation */}
                     <nav className="flex gap-3">
-                        <button className="btn-glass text-sm">Arena</button>
+                        <button
+                            className={`btn-glass text-sm border-red-500/30 hover:bg-red-500/10 text-red-400 ${isClearing ? 'opacity-50' : ''}`}
+                            onClick={handleClearVram}
+                            disabled={isClearing}
+                        >
+                            {isClearing ? 'Clearing...' : '🧹 Clean RAM'}
+                        </button>
                         <button className="btn-glass text-sm">Models</button>
                         <button
                             className="btn-glass text-sm flex items-center gap-2"

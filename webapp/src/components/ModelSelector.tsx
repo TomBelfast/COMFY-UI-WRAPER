@@ -17,6 +17,7 @@ export default function ModelSelector({
 }: ModelSelectorProps) {
     const [models, setModels] = useState<string[]>([]);
     const [loras, setLoras] = useState<string[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         async function loadData() {
@@ -37,12 +38,26 @@ export default function ModelSelector({
         loadData();
     }, []); // Run once on mount
 
+    const filteredModels = models.filter(m =>
+        m.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="space-y-4">
             {/* Model Selection */}
             <div className="glass-card p-6 animate-fade-in-up stagger-2">
-                <span className="text-label">Model</span>
-                <h3 className="text-title text-xl mt-2 mb-4 truncate" title={selectedModel}>
+                <div className="flex justify-between items-center mb-2">
+                    <span className="text-label">Model</span>
+                    <input
+                        type="text"
+                        placeholder="Search models..."
+                        className="input-glass py-1 px-2 text-xs w-24 border-white/10 bg-white/5"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <h3 className="text-title text-xl mt-2 mb-4 truncate text-emerald-400" title={selectedModel}>
                     {selectedModel.replace(".safetensors", "")}
                 </h3>
 
@@ -52,14 +67,15 @@ export default function ModelSelector({
                         value={selectedModel}
                         onChange={(e) => onModelSelect(e.target.value)}
                     >
-                        {models.map(m => (
+                        {filteredModels.length === 0 && <option disabled>No models match search</option>}
+                        {filteredModels.map(m => (
                             <option key={m} value={m} className="text-black">{m}</option>
                         ))}
                     </select>
                 </div>
 
                 <p className="text-sm text-white/60 mb-4">
-                    {models.length} models available.
+                    {filteredModels.length} / {models.length} available.
                 </p>
                 <div className="flex gap-2">
                     <button className="btn-glass w-full text-sm">Refine Config</button>

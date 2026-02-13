@@ -1,11 +1,9 @@
 
 import asyncio
 import json
-import logging
+from loguru import logger
 import websockets
 from typing import Dict, Set, Optional, Any, Callable
-
-logger = logging.getLogger(__name__)
 
 class ComfyWebSocketManager:
     def __init__(self, comfy_url: str):
@@ -23,29 +21,59 @@ class ComfyWebSocketManager:
         try:
             self.ws_connection = await websockets.connect(full_url)
             self.is_running = True
-            logger.info("Connected to ComfyUI WebSocket")
+            logger.success("Connected to ComfyUI WebSocket")
             asyncio.create_task(self._listen())
         except Exception as e:
             logger.error(f"Failed to connect to ComfyUI WS: {e}")
             self.is_running = False
 
     async def _listen(self):
-        """Listen for messages from ComfyUI."""
+        """Listen for messages from ComfyUI and stream them to logs."""
         if not self.ws_connection:
             return
 
         try:
             async for message in self.ws_connection:
                 try:
-                    data = json.loads(message)
-                    self.last_message = data
-                    await self._broadcast(data)
+                    # ComfyUI sends both JSON and binary (for previews)
+                    if isinstance(message, str):
+                        data = json.loads(message)
+                        self.last_message = data
+                        
+                        # Process event for logging
+                        event_type = data.get("type", "unknown")
+                        payload = data.get("data", {})
+                        
+                        if event_type == "status":
+                            # Only log queue changes to avoid spam
+                            queue_remaining = payload.get("status", {}).get("exec_info", {}).get("queue_remaining", 0)
+                            if queue_remaining > 0:
+                                logger.info(f"ComfyUI Status: Queue Remaining = {queue_remaining}")
+                        elif event_type == "execution_start":
+                            logger.info(f"ComfyUI: Starting execution for prompt {payload.get('prompt_id')}")
+                        elif event_type == "executing":
+                            node = payload.get("node")
+                            if node:
+                                logger.debug(f"ComfyUI: Executing node {node}")
+                            else:
+                                logger.success("ComfyUI: Execution finished")
+                        elif event_type == "progress":
+                            value = payload.get("value")
+                            max_val = payload.get("max")
+                            logger.info(f"ComfyUI Progress: {value}/{max_val}")
+                        else:
+                            # Log other events in debug
+                            logger.debug(f"ComfyUI Event: {event_type}")
+
+                        await self._broadcast(data)
                 except json.JSONDecodeError:
                     pass
+                except Exception as e:
+                    logger.error(f"Error processing WS message: {e}")
+                    
         except websockets.exceptions.ConnectionClosed:
             logger.warning("ComfyUI WebSocket connection closed")
             self.is_running = False
-            # Simple reconnection logic could go here
         except Exception as e:
             logger.error(f"Error in WS listener: {e}")
             self.is_running = False
