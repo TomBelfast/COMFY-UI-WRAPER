@@ -3,16 +3,33 @@ import { useState, useEffect, useCallback } from 'react';
 
 const getBaseUrl = () => {
     if (typeof window !== 'undefined') {
-        return ''; // Use relative path, Next.js proxy handles it
+        const url = new URL(window.location.href);
+        // In local dev, we might need the direct backend URL if proxy isn't used
+        // but relative path is best for production behind reverse proxy
+        return '';
     }
-    return 'http://localhost:8000'; // Server side
+    return process.env.BACKEND_URL || 'http://localhost:8000';
 };
 
 export const getBackendUrl = getBaseUrl;
 
 const getWsUrl = () => {
     if (typeof window !== 'undefined') {
-        return `ws://${window.location.hostname}:8000`;
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host; // includes port if present
+
+        // If we're on a standard web domain (aliased), we might want to stay on the same port/protocol host
+        // but if we hardcode 8000, it breaks on HTTPS domains where 8000 isn't proxied or lacks SSL.
+        // For production domains like candy.aihub.ovh, it's safer to use the same host/protocol.
+        // On localhost:3300, we need to target :8000 specifically.
+
+        if (host.includes('localhost') || host.includes('127.0.0.1')) {
+            return `${protocol}//${window.location.hostname}:8000`;
+        }
+
+        // For production, if there's no port 8000 in the URL, don't add it.
+        // This assumes the reverse proxy handles /api/comfy/ws
+        return `${protocol}//${host}`;
     }
     return 'ws://localhost:8000';
 };
