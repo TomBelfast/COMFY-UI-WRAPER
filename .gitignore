@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+venv/
+env/
+.env
+.venv
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# System and IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+
+# ComfyUI specific?
+# (Add if any output folders need ignoring)
