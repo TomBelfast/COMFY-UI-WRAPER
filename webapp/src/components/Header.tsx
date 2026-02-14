@@ -89,10 +89,32 @@ export default function Header() {
     return (
         <>
             <header className="glass-card m-4 p-4 flex items-center justify-between z-40 relative">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                     <Link href="/" className="group">
                         <h1 className="text-title text-2xl group-hover:text-emerald-400 transition-colors">ComfyUI Wrapper</h1>
                     </Link>
+
+                    {/* Status Display Area (Moved to left) */}
+                    <div className="flex items-center gap-3 px-4 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-500/30 transition-all cursor-help group/status">
+                        <div className="relative">
+                            <div className={`w-2.5 h-2.5 rounded-full ${statusColors[comfyStatus.status]}`} />
+                            {comfyStatus.status === "connected" && (
+                                <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${statusColors[comfyStatus.status]} animate-ping opacity-50`} />
+                            )}
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-label !tracking-widest !text-[9px] mb-0.5">Grid Status</span>
+                            <span className="text-xs font-bold text-white/95 leading-none">{statusLabels[comfyStatus.status]}</span>
+                        </div>
+                        {comfyStatus.devices && comfyStatus.devices.length > 0 && comfyStatus.devices[0].vram_total && (
+                            <div className="ml-4 border-l border-white/10 pl-4 flex flex-col items-end">
+                                <span className="text-label !tracking-widest !text-[9px] !text-emerald-500/70 mb-0.5">VRAM Reserve</span>
+                                <span className="text-sm font-mono font-bold text-emerald-400 leading-none">
+                                    {formatVram(comfyStatus.devices[0].vram_total, comfyStatus.devices[0].vram_free || 0)}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -103,62 +125,43 @@ export default function Header() {
                         </div>
                     )}
 
-                    {/* Emergency Controls (New Home in Header) */}
-                    <div className="flex items-center gap-2 border-r border-white/10 pr-6 mr-2">
+                    {/* Emergency Controls */}
+                    <div className="flex items-center gap-2 border-r border-white/10 pr-6 mr-2 h-10">
                         <button
                             onClick={handleInterrupt}
                             disabled={isInterrupting}
-                            className={`p-2 rounded-lg bg-red-500/5 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/50 transition-all group ${isInterrupting ? 'opacity-50' : ''}`}
+                            className={`flex items-center gap-2 px-3 h-full rounded-lg bg-red-500/5 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/50 transition-all group ${isInterrupting ? 'opacity-50' : ''}`}
                             title="INTERRUPT GENERATION"
                         >
                             <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" />
                             </svg>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-red-500/80 group-hover:text-red-500">Stop</span>
                         </button>
 
                         <button
                             onClick={handleClearVram}
                             disabled={isClearing}
-                            className={`p-2 rounded-lg bg-orange-500/5 border border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-500/50 transition-all group ${isClearing ? 'opacity-50' : ''}`}
+                            className={`flex items-center gap-2 px-3 h-full rounded-lg bg-orange-500/5 border border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-500/50 transition-all group ${isClearing ? 'opacity-50' : ''}`}
                             title="CLEAR VRAM"
                         >
                             <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-500/80 group-hover:text-orange-500">Purge</span>
                         </button>
                     </div>
 
-                    {/* Status Display Area */}
-                    <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-500/30 transition-all cursor-help group/status">
-                        <div className="relative">
-                            <div className={`w-2.5 h-2.5 rounded-full ${statusColors[comfyStatus.status]}`} />
-                            {comfyStatus.status === "connected" && (
-                                <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${statusColors[comfyStatus.status]} animate-ping opacity-50`} />
-                            )}
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-label !tracking-widest !text-[9px] mb-1">Grid Status</span>
-                            <span className="text-xs font-bold text-white/95 leading-none">{statusLabels[comfyStatus.status]}</span>
-                        </div>
-                        {comfyStatus.devices && comfyStatus.devices.length > 0 && comfyStatus.devices[0].vram_total && (
-                            <div className="ml-4 border-l border-white/10 pl-4 flex flex-col items-end">
-                                <span className="text-label !tracking-widest !text-[9px] !text-emerald-500/70 mb-1">VRAM Reserve</span>
-                                <span className="text-sm font-mono font-bold text-emerald-400 leading-none">
-                                    {formatVram(comfyStatus.devices[0].vram_total, comfyStatus.devices[0].vram_free || 0)}
-                                </span>
-                            </div>
-                        )}
-                    </div>
 
                     {/* Navigation Protocols */}
-                    <nav className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5">
-                        <Link href="/" className="px-4 py-2 text-label !tracking-widest hover:text-emerald-300 hover:bg-white/5 rounded-lg transition-all !text-emerald-400">Turbo</Link>
-                        <Link href="/flux" className="px-4 py-2 text-label !tracking-widest hover:text-white hover:bg-white/5 rounded-lg transition-all">Flux</Link>
-                        <Link href="/basic" className="px-4 py-2 text-label !tracking-widest hover:text-white hover:bg-white/5 rounded-lg transition-all">Basic</Link>
+                    <nav className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5 h-10">
+                        <Link href="/" className="px-4 h-full flex items-center text-label !tracking-widest hover:text-emerald-300 hover:bg-white/5 rounded-lg transition-all !text-emerald-400">Turbo</Link>
+                        <Link href="/flux" className="px-4 h-full flex items-center text-label !tracking-widest hover:text-white hover:bg-white/5 rounded-lg transition-all">Flux</Link>
+                        <Link href="/basic" className="px-4 h-full flex items-center text-label !tracking-widest hover:text-white hover:bg-white/5 rounded-lg transition-all">Basic</Link>
                         <div className="w-px h-4 bg-white/10 mx-2" />
                         <button
-                            className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all"
+                            className="p-2 h-full rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all flex items-center justify-center"
                             onClick={() => setIsSettingsOpen(true)}
                             title="Protocol Settings"
                         >
