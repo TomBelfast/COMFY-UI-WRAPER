@@ -116,7 +116,7 @@ export default function Header() {
                         )}
                     </div>
 
-                    {/* STOP Button - Moved next to Comfy */}
+                    {/* STOP Button */}
                     <button
                         onClick={handleInterrupt}
                         disabled={isInterrupting}
@@ -129,6 +129,19 @@ export default function Header() {
                         </svg>
                         <span className="text-[10px] font-black uppercase tracking-widest text-red-400 group-hover:text-white">Stop</span>
                     </button>
+
+                    {/* PURGE Button */}
+                    <button
+                        onClick={handleClearVram}
+                        disabled={isClearing}
+                        className={`flex items-center gap-2 px-3 h-10 rounded-lg bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/30 hover:border-orange-500/60 transition-all group ${isClearing ? 'opacity-50' : ''} shadow-[0_0_15px_rgba(249,115,22,0.1)]`}
+                        title="CLEAR VRAM"
+                    >
+                        <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-orange-400 group-hover:text-white">Purge</span>
+                    </button>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -139,20 +152,6 @@ export default function Header() {
                         </div>
                     )}
 
-                    {/* Emergency Controls (Only Purge remains here) */}
-                    <div className="flex items-center gap-2 border-r border-white/10 pr-6 mr-2 h-10">
-                        <button
-                            onClick={handleClearVram}
-                            disabled={isClearing}
-                            className={`flex items-center gap-2 px-3 h-full rounded-lg bg-orange-500/5 border border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-500/50 transition-all group ${isClearing ? 'opacity-50' : ''}`}
-                            title="CLEAR VRAM"
-                        >
-                            <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-500/80 group-hover:text-orange-500">Purge</span>
-                        </button>
-                    </div>
 
 
                     {/* Navigation Protocols */}
