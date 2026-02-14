@@ -46,6 +46,7 @@ body {
   color: var(--text-primary);
   font-family: 'Inter', system-ui, sans-serif;
   min-height: 100vh;
+  color-scheme: dark;
 }
 
 /* Animated Background Grid */

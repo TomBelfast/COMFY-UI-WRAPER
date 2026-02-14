@@ -1,6 +1,10 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { clearVram, interrupt_generation } from '@/lib/api';
+import SettingsModal from "./SettingsModal";
 
 interface ComfyStatus {
     status: "connected" | "disconnected" | "checking";
@@ -8,12 +12,11 @@ interface ComfyStatus {
     devices?: { name: string; type: string; vram_total?: number; vram_free?: number }[];
 }
 
-import { clearVram } from '@/lib/api';
-import SettingsModal from "./SettingsModal";
-
 export default function Header() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isClearing, setIsClearing] = useState(false);
+    const [isInterrupting, setIsInterrupting] = useState(false);
+    const [statusMessage, setStatusMessage] = useState<string | null>(null);
     const [comfyStatus, setComfyStatus] = useState<ComfyStatus>({
         status: "checking",
     });
@@ -32,13 +35,8 @@ export default function Header() {
                 setComfyStatus({ status: "disconnected" });
             }
         };
-
-        // Check immediately
         checkConnection();
-
-        // Check every 2 seconds for real-time VRAM
         const interval = setInterval(checkConnection, 2000);
-
         return () => clearInterval(interval);
     }, []);
 
@@ -51,19 +49,34 @@ export default function Header() {
     const statusLabels = {
         connected: "ComfyUI Online",
         disconnected: "ComfyUI Offline",
-        checking: "Sprawdzam...",
+        checking: "Checking...",
     };
 
     const handleClearVram = async () => {
-        if (!confirm("Are you sure you want to clear ComfyUI VRAM?")) return;
         setIsClearing(true);
+        setStatusMessage("Clearing VRAM...");
         try {
             await clearVram();
-            alert("VRAM Cleared Successfully");
+            setStatusMessage("VRAM Cleared");
         } catch (e) {
-            alert("Failed to clear VRAM");
+            setStatusMessage("Error clearing VRAM");
         } finally {
             setIsClearing(false);
+            setTimeout(() => setStatusMessage(null), 3000);
+        }
+    };
+
+    const handleInterrupt = async () => {
+        setIsInterrupting(true);
+        setStatusMessage("Interrupting...");
+        try {
+            await interrupt_generation();
+            setStatusMessage("Stopped");
+        } catch (e) {
+            setStatusMessage("Error stopping");
+        } finally {
+            setIsInterrupting(false);
+            setTimeout(() => setStatusMessage(null), 3000);
         }
     };
 
@@ -77,61 +90,79 @@ export default function Header() {
         <>
             <header className="glass-card m-4 p-4 flex items-center justify-between z-40 relative">
                 <div className="flex items-center gap-4">
-                    <h1 className="text-title text-2xl">ComfyUI Wrapper</h1>
+                    <Link href="/" className="group">
+                        <h1 className="text-title text-2xl group-hover:text-emerald-400 transition-colors">ComfyUI Wrapper</h1>
+                    </Link>
                 </div>
 
                 <div className="flex items-center gap-6">
-                    {/* Connection Status */}
-                    <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-white/5 border border-white/10">
+                    {/* Status Message (Animated Overlay) */}
+                    {statusMessage && (
+                        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 px-4 py-1 bg-white/5 border border-white/10 rounded-full animate-fade-in backdrop-blur-md">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">{statusMessage}</span>
+                        </div>
+                    )}
+
+                    {/* Emergency Controls (New Home in Header) */}
+                    <div className="flex items-center gap-2 border-r border-white/10 pr-6 mr-2">
+                        <button
+                            onClick={handleInterrupt}
+                            disabled={isInterrupting}
+                            className={`p-2 rounded-lg bg-red-500/5 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/50 transition-all group ${isInterrupting ? 'opacity-50' : ''}`}
+                            title="INTERRUPT GENERATION"
+                        >
+                            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" />
+                            </svg>
+                        </button>
+
+                        <button
+                            onClick={handleClearVram}
+                            disabled={isClearing}
+                            className={`p-2 rounded-lg bg-orange-500/5 border border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-500/50 transition-all group ${isClearing ? 'opacity-50' : ''}`}
+                            title="CLEAR VRAM"
+                        >
+                            <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Status Display Area */}
+                    <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-500/30 transition-all cursor-help group/status">
                         <div className="relative">
-                            <div
-                                className={`w-3 h-3 rounded-full ${statusColors[comfyStatus.status]}`}
-                            />
+                            <div className={`w-2.5 h-2.5 rounded-full ${statusColors[comfyStatus.status]}`} />
                             {comfyStatus.status === "connected" && (
-                                <div
-                                    className={`absolute inset-0 w-3 h-3 rounded-full ${statusColors[comfyStatus.status]} animate-ping opacity-75`}
-                                />
+                                <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${statusColors[comfyStatus.status]} animate-ping opacity-50`} />
                             )}
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-medium text-white/90">
-                                {statusLabels[comfyStatus.status]}
-                            </span>
-                            {comfyStatus.comfyui_url && (
-                                <span className="text-xs text-white/40">
-                                    {comfyStatus.comfyui_url}
-                                </span>
-                            )}
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 leading-none mb-1">Grid Status</span>
+                            <span className="text-xs font-bold text-white/90 leading-none">{statusLabels[comfyStatus.status]}</span>
                         </div>
-                        {comfyStatus.devices && comfyStatus.devices.length > 0 && (
-                            <div className="ml-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col items-end min-w-[140px]">
-                                <span className="text-[10px] text-emerald-500/70 font-bold tracking-widest uppercase mb-1">
-                                    {comfyStatus.devices[0].name?.split(" ")[0] || "GPU"} MEMORY
+                        {comfyStatus.devices && comfyStatus.devices.length > 0 && comfyStatus.devices[0].vram_total && (
+                            <div className="ml-4 border-l border-white/10 pl-4 flex flex-col items-end">
+                                <span className="text-[9px] text-emerald-500/50 font-bold uppercase tracking-widest leading-none mb-1">VRAM Reserve</span>
+                                <span className="text-sm font-mono font-bold text-emerald-400 leading-none">
+                                    {formatVram(comfyStatus.devices[0].vram_total, comfyStatus.devices[0].vram_free || 0)}
                                 </span>
-                                {comfyStatus.devices[0].vram_total && comfyStatus.devices[0].vram_free !== undefined && (
-                                    <span className="text-lg text-emerald-400 font-bold font-mono tracking-tight leading-none drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">
-                                        {formatVram(comfyStatus.devices[0].vram_total, comfyStatus.devices[0].vram_free)}
-                                    </span>
-                                )}
                             </div>
                         )}
                     </div>
 
-                    {/* Navigation */}
-                    <nav className="flex gap-3">
+                    {/* Navigation Protocols */}
+                    <nav className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5">
+                        <Link href="/" className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-500/60 hover:text-emerald-400 hover:bg-white/5 rounded-lg transition-all">Turbo</Link>
+                        <Link href="/flux" className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white/80 hover:bg-white/5 rounded-lg transition-all">Flux</Link>
+                        <Link href="/basic" className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white/80 hover:bg-white/5 rounded-lg transition-all">Basic</Link>
+                        <div className="w-px h-4 bg-white/10 mx-2" />
                         <button
-                            className={`btn-glass text-sm border-red-500/30 hover:bg-red-500/10 text-red-400 ${isClearing ? 'opacity-50' : ''}`}
-                            onClick={handleClearVram}
-                            disabled={isClearing}
-                        >
-                            {isClearing ? 'Clearing...' : '🧹 Clean RAM'}
-                        </button>
-                        <button className="btn-glass text-sm">Models</button>
-                        <button
-                            className="btn-glass text-sm flex items-center gap-2"
+                            className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all"
                             onClick={() => setIsSettingsOpen(true)}
+                            title="Protocol Settings"
                         >
-                            <span>⚙️</span> Settings
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </button>
                     </nav>
                 </div>

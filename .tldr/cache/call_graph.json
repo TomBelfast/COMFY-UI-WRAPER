@@ -1,0 +1,579 @@
+{
+  "edges": [
+    {
+      "from_file": "tests/test_aspect_ratios.py",
+      "from_func": "<module>",
+      "to_file": "tests/test_aspect_ratios.py",
+      "to_func": "generate_and_verify"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "generate_image",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_batch_size_with_aspect_ratio",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "ImageGenerateRequest"
+    },
+    {
+      "from_file": "backend/main.py",
+      "from_func": "shutdown_event",
+      "to_file": "backend/services/websocket_manager.py",
+      "to_func": "get_manager"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "get_available_models",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/services/websocket_manager.py",
+      "from_func": "get_manager",
+      "to_file": "backend/services/websocket_manager.py",
+      "to_func": "ComfyWebSocketManager"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_auto_save_triggers_gallery_refresh",
+      "to_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "to_func": "capture_broadcast"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_dimensions_basic",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "ImageGenerateRequest"
+    },
+    {
+      "from_file": "backend/debug_conn.py",
+      "from_func": "main",
+      "to_file": "backend/debug_conn.py",
+      "to_func": "check_connection"
+    },
+    {
+      "from_file": "tools/distribute_skills.py",
+      "from_func": "<module>",
+      "to_file": "tools/distribute_skills.py",
+      "to_func": "install_skills"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_dimensions_set_correctly",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "ImageGenerateRequest"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "get_image",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/database.py",
+      "from_func": "seed_defaults",
+      "to_file": "backend/database.py",
+      "to_func": "GenerationPreset"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "check_status",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "ImageStatusResponse"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "get_available_loras",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_dimensions_flux",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "build_workflow"
+    },
+    {
+      "from_file": "backend/services/websocket_manager.py",
+      "from_func": "_auto_save_images",
+      "to_file": "backend/database.py",
+      "to_func": "GalleryImage"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "interrupt_generation",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "generate_image",
+      "to_file": "backend/services/websocket_manager.py",
+      "to_func": "get_manager"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "generate_image",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "build_workflow"
+    },
+    {
+      "from_file": "backend/init_gallery.py",
+      "from_func": "<module>",
+      "to_file": "backend/database.py",
+      "to_func": "init_db"
+    },
+    {
+      "from_file": "backend/database.py",
+      "from_func": "init_db",
+      "to_file": "backend/database.py",
+      "to_func": "seed_defaults"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_batch_size_with_aspect_ratio",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "build_workflow"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "_setup_manager",
+      "to_file": "backend/services/websocket_manager.py",
+      "to_func": "ComfyWebSocketManager"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_default_dimensions",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "ImageGenerateRequest"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "comfy_health",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_dimensions_turbo_aio",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "ImageGenerateRequest"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_dimensions_basic",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "build_workflow"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "clear_vram",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "check_status",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "websocket_endpoint",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "backend/debug_conn.py",
+      "from_func": "<module>",
+      "to_file": "backend/debug_conn.py",
+      "to_func": "main"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "websocket_endpoint",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "forward_message"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_dimensions_set_correctly",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "build_workflow"
+    },
+    {
+      "from_file": "backend/main.py",
+      "from_func": "startup_event",
+      "to_file": "backend/database.py",
+      "to_func": "init_db"
+    },
+    {
+      "from_file": "backend/main.py",
+      "from_func": "startup_event",
+      "to_file": "backend/services/websocket_manager.py",
+      "to_func": "get_manager"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_full_e2e_aspect_ratio_flow",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "ImageGenerateRequest"
+    },
+    {
+      "from_file": "knowledge/claude-code-comfyui-nodes/tests/test_claude_code_comfyui_nodes.py",
+      "from_func": "test_example_node_initialization",
+      "to_file": "knowledge/claude-code-comfyui-nodes/tests/test_claude_code_comfyui_nodes.py",
+      "to_func": "example_node"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "get_queue",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "get_comfy_url"
+    },
+    {
+      "from_file": "tools/install_remote.py",
+      "from_func": "<module>",
+      "to_file": "tools/install_remote.py",
+      "to_func": "main"
+    },
+    {
+      "from_file": "backend/services/logging_service.py",
+      "from_func": "setup_logging",
+      "to_file": "backend/services/logging_service.py",
+      "to_func": "InterceptHandler"
+    },
+    {
+      "from_file": "backend/routes/gallery.py",
+      "from_func": "add_to_gallery",
+      "to_file": "backend/database.py",
+      "to_func": "GalleryImage"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_default_dimensions",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "build_workflow"
+    },
+    {
+      "from_file": "backend/routes/persistence.py",
+      "from_func": "set_config",
+      "to_file": "backend/database.py",
+      "to_func": "AppConfig"
+    },
+    {
+      "from_file": "tools/install_remote.py",
+      "from_func": "install_skill_files",
+      "to_file": "tools/install_remote.py",
+      "to_func": "download_file"
+    },
+    {
+      "from_file": "tools/install_remote.py",
+      "from_func": "main",
+      "to_file": "tools/install_remote.py",
+      "to_func": "install_skill_files"
+    },
+    {
+      "from_file": "backend/routes/persistence.py",
+      "from_func": "create_preset",
+      "to_file": "backend/database.py",
+      "to_func": "GenerationPreset"
+    },
+    {
+      "from_file": "backend/routes/comfy.py",
+      "from_func": "websocket_endpoint",
+      "to_file": "backend/services/websocket_manager.py",
+      "to_func": "get_manager"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_dimensions_turbo_aio",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "build_workflow"
+    },
+    {
+      "from_file": "tools/install_remote.py",
+      "from_func": "main",
+      "to_file": "tools/install_remote.py",
+      "to_func": "get_json"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_workflow_dimensions_flux",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "ImageGenerateRequest"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "<module>",
+      "to_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "to_func": "override_get_db"
+    },
+    {
+      "from_file": "backend/tests/test_aspect_ratio_gallery_e2e.py",
+      "from_func": "test_full_e2e_aspect_ratio_flow",
+      "to_file": "backend/routes/comfy.py",
+      "to_func": "build_workflow"
+    },
+    {
+      "from_file": "webapp/src/components/Gallery.tsx",
+      "from_func": "handleClearAll",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "clearGallery"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "fetchLoras",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getApiBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/components/Header.tsx",
+      "from_func": "formatVram",
+      "to_file": "webapp/src/components/Header.tsx",
+      "to_func": "toGB"
+    },
+    {
+      "from_file": "webapp/src/components/Gallery.tsx",
+      "from_func": "loadGallery",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "fetchGallery"
+    },
+    {
+      "from_file": "webapp/src/app/page.tsx",
+      "from_func": "handleSavePreset",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "savePreset"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "generateImage",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getApiBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "getStoreUrl",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "clearGallery",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getGalleryUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "fetchPresets",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getStoreUrl"
+    },
+    {
+      "from_file": "webapp/src/components/ModelSelector.tsx",
+      "from_func": "loadData",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "fetchModels"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "savePreset",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getStoreUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "deleteFromGallery",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getGalleryUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "fetchHealth",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getApiBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/app/page.tsx",
+      "from_func": "handleGenerate",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "generateImage"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "saveConfig",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getStoreUrl"
+    },
+    {
+      "from_file": "webapp/src/components/Header.tsx",
+      "from_func": "handleClearVram",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "clearVram"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "saveToGallery",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getGalleryUrl"
+    },
+    {
+      "from_file": "webapp/src/components/Gallery.tsx",
+      "from_func": "handleDelete",
+      "to_file": "webapp/src/components/Gallery.tsx",
+      "to_func": "loadGallery"
+    },
+    {
+      "from_file": "webapp/src/app/page.tsx",
+      "from_func": "handleGenerate",
+      "to_file": "webapp/src/app/page.tsx",
+      "to_func": "waitForCompletion"
+    },
+    {
+      "from_file": "webapp/src/app/page.tsx",
+      "from_func": "handleSavePreset",
+      "to_file": "webapp/src/app/page.tsx",
+      "to_func": "loadPresets"
+    },
+    {
+      "from_file": "webapp/src/components/SettingsModal.tsx",
+      "from_func": "SettingsModal",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "fetchConfig"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "getImageUrl",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getApiBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "getApiBaseUrl",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "deletePreset",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getStoreUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "useComfyWebSocket",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getWsUrl"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "clearVram",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getApiBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/app/page.tsx",
+      "from_func": "handleDeletePreset",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "deletePreset"
+    },
+    {
+      "from_file": "webapp/src/components/Gallery.tsx",
+      "from_func": "handleClearAll",
+      "to_file": "webapp/src/components/Gallery.tsx",
+      "to_func": "loadGallery"
+    },
+    {
+      "from_file": "webapp/src/components/SettingsModal.tsx",
+      "from_func": "handleSave",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "saveConfig"
+    },
+    {
+      "from_file": "webapp/src/components/SettingsModal.tsx",
+      "from_func": "SettingsModal",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "saveConfig"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "getGalleryUrl",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/components/Gallery.tsx",
+      "from_func": "handleKeyDown",
+      "to_file": "webapp/src/components/Gallery.tsx",
+      "to_func": "handlePrev"
+    },
+    {
+      "from_file": "webapp/src/components/SettingsModal.tsx",
+      "from_func": "loadSettings",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "fetchConfig"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "fetchModels",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getApiBaseUrl"
+    },
+    {
+      "from_file": "webapp/src/components/Gallery.tsx",
+      "from_func": "handleKeyDown",
+      "to_file": "webapp/src/components/Gallery.tsx",
+      "to_func": "handleNext"
+    },
+    {
+      "from_file": "webapp/src/components/SettingsModal.tsx",
+      "from_func": "SettingsModal",
+      "to_file": "webapp/src/components/SettingsModal.tsx",
+      "to_func": "loadSettings"
+    },
+    {
+      "from_file": "webapp/src/app/page.tsx",
+      "from_func": "loadPresets",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "fetchPresets"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "fetchGallery",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getGalleryUrl"
+    },
+    {
+      "from_file": "webapp/src/app/page.tsx",
+      "from_func": "handleDeletePreset",
+      "to_file": "webapp/src/app/page.tsx",
+      "to_func": "loadPresets"
+    },
+    {
+      "from_file": "webapp/src/components/Gallery.tsx",
+      "from_func": "handleDelete",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "deleteFromGallery"
+    },
+    {
+      "from_file": "webapp/src/components/ModelSelector.tsx",
+      "from_func": "loadData",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "fetchLoras"
+    },
+    {
+      "from_file": "webapp/src/lib/api.ts",
+      "from_func": "fetchConfig",
+      "to_file": "webapp/src/lib/api.ts",
+      "to_func": "getStoreUrl"
+    }
+  ],
+  "languages": [
+    "python",
+    "typescript"
+  ],
+  "timestamp": 1771041543.2221105
+}

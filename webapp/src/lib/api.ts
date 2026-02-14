@@ -245,3 +245,10 @@ export const clearVram = async () => {
     });
     return await res.json();
 };
+
+export const interrupt_generation = async () => {
+    const res = await fetch(`${getApiBaseUrl()}/interrupt`, {
+        method: 'POST',
+    });
+    return await res.json();
+};

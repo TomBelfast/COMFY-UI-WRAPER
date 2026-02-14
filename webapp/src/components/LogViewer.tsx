@@ -14,7 +14,7 @@ interface LogEntry {
 const LogViewer: React.FC = () => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isConnected, setIsConnected] = useState(false);
-    const [isVisible, setIsVisible] = useState(true);
+    const [isVisible, setIsVisible] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
