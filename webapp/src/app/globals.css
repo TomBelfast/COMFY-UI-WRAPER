@@ -359,3 +359,47 @@ body {
     --snake-angle: 360deg;
   }
 }
+
+/* Matrix Decode Animation */
+@keyframes matrix-decode {
+  0% {
+    filter: blur(20px) brightness(2) contrast(1.5) saturate(0);
+    transform: scale(1.05);
+    opacity: 0;
+  }
+
+  50% {
+    filter: blur(10px) brightness(1.2) contrast(1.2) saturate(0.5);
+    opacity: 0.5;
+  }
+
+  100% {
+    filter: blur(0) brightness(1) contrast(1) saturate(1);
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-matrix-decode {
+  animation: matrix-decode 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes aura-pulse {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+    filter: blur(100px);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+    filter: blur(130px);
+  }
+}
+
+.animate-aura-pulse {
+  animation: aura-pulse 4s ease-in-out infinite;
+}

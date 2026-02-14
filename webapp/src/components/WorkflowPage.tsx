@@ -2,7 +2,7 @@
 "use client";
 
 import Header from "@/components/Header";
-import Gallery from "@/components/Gallery";
+import GalleryView from "@/components/GalleryView";
 import LogViewer from "@/components/LogViewer";
 import GenerationGate from "@/components/Settings/GenerationGate";
 import ParameterPanel from "@/components/Settings/ParameterPanel";
@@ -60,11 +60,18 @@ export default function WorkflowPage({
                     />
                 </div>
 
-                {/* RIGHT COMPONENT: Gallery (Atomic Isolation) */}
+                {/* RIGHT COMPONENT: GalleryView (Atomic Isolation) */}
                 <div className="col-span-12 lg:col-span-7">
-                    <Gallery
+                    <GalleryView
                         refreshTrigger={logic.galleryRefresh}
                         onSelect={logic.handleLoadGalleryItem}
+                        positivePrompt={logic.positivePrompt}
+                        setPositivePrompt={logic.setPositivePrompt}
+                        negativePrompt={logic.negativePrompt}
+                        setNegativePrompt={logic.setNegativePrompt}
+                        handleGenerate={logic.handleGenerate}
+                        isGenerating={logic.isGenerating}
+                        progress={logic.progress}
                     />
                 </div>
 

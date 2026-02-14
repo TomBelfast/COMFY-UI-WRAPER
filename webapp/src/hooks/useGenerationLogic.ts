@@ -31,6 +31,8 @@ export function useGenerationLogic() {
     const [batchCount, setBatchCount] = useState(1);
     const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
     const [progress, setProgress] = useState({ value: 0, max: 0 });
+    const [startTime, setStartTime] = useState<number | null>(null);
+    const [elapsedTime, setElapsedTime] = useState<number>(0);
 
     // Gallery Refresh State
     const [galleryRefresh, setGalleryRefresh] = useState(0);
@@ -48,6 +50,19 @@ export function useGenerationLogic() {
         const loaded = await fetchPresets();
         setPresets(loaded);
     };
+
+    // Timer effect
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isGenerating && startTime) {
+            interval = setInterval(() => {
+                setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+            }, 1000);
+        } else if (!isGenerating) {
+            setElapsedTime(0);
+        }
+        return () => clearInterval(interval);
+    }, [isGenerating, startTime]);
 
     // WebSocket Logic for Status & Auto-Save
     const { lastMessage } = useComfyWebSocket();
@@ -103,6 +118,8 @@ export function useGenerationLogic() {
         setIsGenerating(true);
         setCurrentBatchIndex(0);
         setProgress({ value: 0, max: 0 });
+        setStartTime(Date.now());
+        setElapsedTime(0);
 
         try {
             for (let i = 0; i < batchCount; i++) {
@@ -146,6 +163,7 @@ export function useGenerationLogic() {
             setIsGenerating(false);
             setIsProcessing(false);
             setProgress({ value: 0, max: 0 });
+            setStartTime(null);
         }
     };
 
@@ -225,6 +243,7 @@ export function useGenerationLogic() {
         batchCount, setBatchCount,
         currentBatchIndex, setCurrentBatchIndex,
         progress, setProgress,
+        elapsedTime,
         galleryRefresh, setGalleryRefresh,
         presets, setPresets,
         presetName, setPresetName,

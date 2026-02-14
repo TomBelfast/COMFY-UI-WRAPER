@@ -22,6 +22,7 @@ interface GenerationGateProps {
     generationStatus: string;
     currentBatchIndex: number;
     progress: { value: number; max: number };
+    elapsedTime: number;
     presets: any[];
     handleLoadPreset: (p: any) => void;
     handleDeletePreset: (name: string, e: React.MouseEvent) => void;
@@ -47,6 +48,7 @@ export default function GenerationGate({
     generationStatus,
     currentBatchIndex,
     progress,
+    elapsedTime,
     presets,
     handleLoadPreset,
     handleDeletePreset,
@@ -169,7 +171,7 @@ export default function GenerationGate({
                 <div className="grid grid-cols-2 gap-4 mt-1 p-4 bg-white/[0.02] rounded-xl border border-white/5">
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-label !tracking-normal">Multi-Cast (Size)</span>
+                            <span className="text-[10px] text-label !tracking-normal">Batch Size</span>
                             <span className="text-xs font-bold text-emerald-400">{batchSize}</span>
                         </div>
                         <input
@@ -222,11 +224,22 @@ export default function GenerationGate({
 
                         <div>
                             <div className="flex justify-between text-[9px] text-white/40 mb-1 font-mono uppercase">
-                                <span>Neural Integration</span>
-                                <span>{progress.max ? Math.round((progress.value / progress.max) * 100) : 0}%</span>
+                                <div className="flex gap-4">
+                                    <span>Neural Integration</span>
+                                    <span className="text-emerald-500 font-bold">[{progress.value} / {progress.max}]</span>
+                                </div>
+                                <div className="flex gap-4">
+                                    <span>Time: {elapsedTime}s</span>
+                                    <span>{progress.max ? Math.round((progress.value / progress.max) * 100) : 0}%</span>
+                                </div>
                             </div>
-                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-300" style={{ width: `${progress.max ? (progress.value / progress.max) * 100 : 0}%` }} />
+                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                <div className="h-full bg-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.8)] transition-all duration-300 relative" style={{ width: `${progress.max ? (progress.value / progress.max) * 100 : 0}%` }}>
+                                    <div className="absolute top-0 right-0 w-4 h-full bg-white/40 blur-[2px] animate-pulse" />
+                                </div>
+                            </div>
+                            <div className="mt-2 text-[8px] font-mono text-emerald-500/50 uppercase tracking-tighter overflow-hidden whitespace-nowrap">
+                                {`>>> PROCESSING NEURAL TENSORS | SEED_OP:${Math.round(Math.random() * 999999)} | STREAM_ACTIVE | BUFFER_SYNC...`.repeat(2)}
                             </div>
                         </div>
                     </div>

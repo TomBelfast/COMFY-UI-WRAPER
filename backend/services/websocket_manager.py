@@ -20,6 +20,10 @@ class ComfyWebSocketManager:
 
     async def connect(self):
         """Infinite loop to maintain connection to ComfyUI WS."""
+        if self.is_running:
+            logger.warning("ComfyUI WS connection loop is already running.")
+            return
+            
         self.is_running = True
         full_url = f"{self.comfy_ws_url}?clientId={self.client_id}"
         
@@ -81,8 +85,9 @@ class ComfyWebSocketManager:
                         elif event_type == "executed":
                             # This is the gold mine for auto-save
                             prompt_id = payload.get("prompt_id")
+                            node_id = payload.get("node")
                             output = payload.get("output", {})
-                            logger.debug(f"ComfyUI: Executed event received for prompt {prompt_id}")
+                            logger.info(f"ComfyUI: Executed Node {node_id} for prompt {prompt_id}")
                             
                             if prompt_id in self.metadata_cache:
                                 await self._auto_save_images(prompt_id, output)
@@ -192,11 +197,16 @@ managers: Dict[str, ComfyWebSocketManager] = {}
 def get_manager(base_url: str) -> ComfyWebSocketManager:
     if base_url not in managers:
         managers[base_url] = ComfyWebSocketManager(base_url)
-        # Try to start it if loop is running
+    
+    # Only start connection if not already running
+    manager = managers[base_url]
+    if not manager.is_running:
         try:
             loop = asyncio.get_running_loop()
             if loop.is_running():
-                loop.create_task(managers[base_url].connect())
+                logger.info(f"Auto-starting WS connection for {base_url}")
+                loop.create_task(manager.connect())
         except RuntimeError:
-            pass # No loop yet, will be started by main.py
-    return managers[base_url]
+            pass # Will be started manually or on first loop
+            
+    return manager

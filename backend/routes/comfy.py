@@ -67,7 +67,10 @@ async def generate_image(request: ImageGenerateRequest, db: Session = Depends(ge
     try:
         workflow = build_comfy_workflow(request)
         logger.debug(f"GENERATE: Built workflow steps: {workflow.get('5', {}).get('inputs', {}).get('steps')}")
-        client_id = f"wrapper_{random.randint(0, 9999)}"
+        
+        # Use a consistent client_id to ensure we receive status updates via the specific WS connection
+        ws_manager = get_manager(url)
+        client_id = ws_manager.client_id
         
         async with httpx.AsyncClient(timeout=120.0, trust_env=False) as client:
             response = await client.post(
@@ -79,7 +82,6 @@ async def generate_image(request: ImageGenerateRequest, db: Session = Depends(ge
             prompt_id = result["prompt_id"]
             
             # Register metadata for auto-save via WebSocket
-            ws_manager = get_manager(url)
             ws_manager.register_metadata(prompt_id, {
                 "prompt_positive": request.positive_prompt,
                 "prompt_negative": request.negative_prompt,
