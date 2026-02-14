@@ -1,9 +1,9 @@
-
 import asyncio
 import json
 from loguru import logger
 import websockets
 from typing import Dict, Set, Optional, Any, Callable
+from database import SessionLocal, GalleryImage
 
 class ComfyWebSocketManager:
     def __init__(self, comfy_url: str):
@@ -13,19 +13,38 @@ class ComfyWebSocketManager:
         self.connected_clients: Set[Callable[[Dict], Any]] = set()
         self.is_running = False
         self.last_message = {}
+        self.metadata_cache: Dict[str, Dict] = {} # prompt_id -> metadata
+        self.reconnect_delay = 5 # seconds
+        self.ping_interval = 30 # seconds (User requested 30s)
+        self.ping_timeout = 30
 
     async def connect(self):
-        """Establish connection to ComfyUI WebSocket."""
+        """Infinite loop to maintain connection to ComfyUI WS."""
+        self.is_running = True
         full_url = f"{self.comfy_ws_url}?clientId={self.client_id}"
-        logger.info(f"Connecting to ComfyUI WS: {full_url}")
-        try:
-            self.ws_connection = await websockets.connect(full_url)
-            self.is_running = True
-            logger.success("Connected to ComfyUI WebSocket")
-            asyncio.create_task(self._listen())
-        except Exception as e:
-            logger.error(f"Failed to connect to ComfyUI WS: {e}")
-            self.is_running = False
+        
+        while self.is_running:
+            logger.info(f"Connecting to ComfyUI WS: {full_url}")
+            try:
+                async with websockets.connect(
+                    full_url, 
+                    ping_interval=self.ping_interval, 
+                    ping_timeout=self.ping_timeout
+                ) as ws:
+                    self.ws_connection = ws
+                    logger.success(f"Connected to ComfyUI WebSocket (Ping: {self.ping_interval}s)")
+                    await self._listen()
+            except Exception as e:
+                logger.error(f"ComfyUI WS connection error: {e}. Retrying in {self.reconnect_delay}s...")
+                await asyncio.sleep(self.reconnect_delay)
+            finally:
+                self.ws_connection = None
+
+    def register_metadata(self, prompt_id: str, metadata: Dict):
+        """Register metadata for a prompt to be saved automatically upon completion."""
+        logger.info(f"METADATA: Registering metadata for PROMPT_ID: {prompt_id}")
+        self.metadata_cache[prompt_id] = metadata
+        logger.debug(f"METADATA: Current cache size: {len(self.metadata_cache)}")
 
     async def _listen(self):
         """Listen for messages from ComfyUI and stream them to logs."""
@@ -46,25 +65,30 @@ class ComfyWebSocketManager:
                         
                         if event_type == "status":
                             # Only log queue changes to avoid spam
-                            queue_remaining = payload.get("status", {}).get("exec_info", {}).get("queue_remaining", 0)
-                            if queue_remaining > 0:
-                                logger.info(f"ComfyUI Status: Queue Remaining = {queue_remaining}")
+                            # queue_remaining = payload.get("status", {}).get("exec_info", {}).get("queue_remaining", 0)
+                            pass
                         elif event_type == "execution_start":
-                            logger.info(f"ComfyUI: Starting execution for prompt {payload.get('prompt_id')}")
+                            pid = payload.get('prompt_id')
+                            logger.info(f"ComfyUI: Starting execution for prompt {pid} (In cache: {pid in self.metadata_cache})")
                         elif event_type == "executing":
                             node = payload.get("node")
-                            if node:
-                                logger.debug(f"ComfyUI: Executing node {node}")
-                            else:
+                            if not node:
                                 logger.success("ComfyUI: Execution finished")
+                                # This is a fallback if 'executed' is not enough
                         elif event_type == "progress":
-                            value = payload.get("value")
-                            max_val = payload.get("max")
-                            logger.info(f"ComfyUI Progress: {value}/{max_val}")
-                        else:
-                            # Log other events in debug
-                            logger.debug(f"ComfyUI Event: {event_type}")
-
+                            # Skip heavy progress logging unless needed
+                            pass
+                        elif event_type == "executed":
+                            # This is the gold mine for auto-save
+                            prompt_id = payload.get("prompt_id")
+                            output = payload.get("output", {})
+                            logger.debug(f"ComfyUI: Executed event received for prompt {prompt_id}")
+                            
+                            if prompt_id in self.metadata_cache:
+                                await self._auto_save_images(prompt_id, output)
+                            else:
+                                logger.warning(f"ComfyUI: Executed event for prompt {prompt_id} but no metadata in cache!")
+                        
                         await self._broadcast(data)
                 except json.JSONDecodeError:
                     pass
@@ -72,14 +96,73 @@ class ComfyWebSocketManager:
                     logger.error(f"Error processing WS message: {e}")
                     
         except websockets.exceptions.ConnectionClosed:
-            logger.warning("ComfyUI WebSocket connection closed")
-            self.is_running = False
+            logger.warning("ComfyUI WebSocket connection closed remotely")
         except Exception as e:
-            logger.error(f"Error in WS listener: {e}")
-            self.is_running = False
+            logger.error(f"Error in WS listener loop: {e}")
+
+    async def _auto_save_images(self, prompt_id: str, output: Dict):
+        """Automatically save generated images to DB."""
+        metadata = self.metadata_cache.get(prompt_id)
+        if not metadata:
+            return
+
+        saved_count = 0
+        try:
+            db = SessionLocal()
+
+            # Collect image lists from output.
+            # ComfyUI 'executed' event sends flat: {"images": [{...}]}
+            # but could also be nested: {"node_id": {"images": [{...}]}}
+            image_lists = []
+            if "images" in output and isinstance(output["images"], list):
+                # Flat structure from 'executed' event
+                image_lists.append(output["images"])
+            else:
+                # Nested structure (node_id -> {images: [...]})
+                for node_id, node_output in output.items():
+                    if isinstance(node_output, dict) and "images" in node_output:
+                        image_lists.append(node_output["images"])
+
+            for images in image_lists:
+                for img in images:
+                    filename = img.get("filename")
+                    subfolder = img.get("subfolder", "")
+
+                    if filename:
+                        db_image = GalleryImage(
+                            filename=filename,
+                            subfolder=subfolder,
+                            prompt_positive=metadata.get("prompt_positive", ""),
+                            prompt_negative=metadata.get("prompt_negative", ""),
+                            model=metadata.get("model", ""),
+                            width=metadata.get("width", 1024),
+                            height=metadata.get("height", 1024),
+                            steps=metadata.get("steps", 20),
+                            cfg=metadata.get("cfg", 1.0)
+                        )
+                        db.add(db_image)
+                        saved_count += 1
+
+            if saved_count > 0:
+                db.commit()
+                logger.success(f"AUTO-SAVE: Successfully saved {saved_count} images for prompt {prompt_id} to DB")
+                # Broadcast gallery update event
+                update_msg = {"type": "gallery_updated", "data": {"prompt_id": prompt_id, "count": saved_count}}
+                logger.debug(f"BROADCAST: Sending gallery_updated signal: {update_msg}")
+                await self._broadcast(update_msg)
+            else:
+                logger.warning(f"AUTO-SAVE: No images found in output for prompt {prompt_id}. Output keys: {list(output.keys())}")
+
+            # Cleanup cache
+            del self.metadata_cache[prompt_id]
+
+        except Exception as e:
+            logger.error(f"Failed to auto-save images for prompt {prompt_id}: {e}")
+        finally:
+            db.close()
 
     async def disconnect(self):
-        """Close connection."""
+        """Stop reconnect loop and close connection."""
         self.is_running = False
         if self.ws_connection:
             await self.ws_connection.close()
@@ -103,11 +186,17 @@ class ComfyWebSocketManager:
             except Exception as e:
                 logger.error(f"Error broadcasting to client: {e}")
 
-# Global instance
-manager: Optional[ComfyWebSocketManager] = None
+# Global manager dictionary: url -> manager
+managers: Dict[str, ComfyWebSocketManager] = {}
 
 def get_manager(base_url: str) -> ComfyWebSocketManager:
-    global manager
-    if manager is None:
-        manager = ComfyWebSocketManager(base_url)
-    return manager
+    if base_url not in managers:
+        managers[base_url] = ComfyWebSocketManager(base_url)
+        # Try to start it if loop is running
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_running():
+                loop.create_task(managers[base_url].connect())
+        except RuntimeError:
+            pass # No loop yet, will be started by main.py
+    return managers[base_url]

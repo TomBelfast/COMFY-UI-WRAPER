@@ -62,3 +62,9 @@ def delete_from_gallery(id: int, db: Session = Depends(get_db)):
     db.delete(item)
     db.commit()
     return {"status": "deleted", "id": id}
+@router.delete("")
+def clear_gallery(db: Session = Depends(get_db)):
+    """Clear all images from gallery history."""
+    db.query(GalleryImage).delete()
+    db.commit()
+    return {"status": "cleared"}

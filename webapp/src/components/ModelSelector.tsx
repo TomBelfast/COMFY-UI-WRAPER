@@ -54,6 +54,7 @@ export default function ModelSelector({
                         className="input-glass py-1 px-2 text-xs w-24 border-white/10 bg-white/5"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        suppressHydrationWarning
                     />
                 </div>
 
@@ -66,6 +67,7 @@ export default function ModelSelector({
                         className="input-glass w-full text-sm"
                         value={selectedModel}
                         onChange={(e) => onModelSelect(e.target.value)}
+                        suppressHydrationWarning
                     >
                         {filteredModels.length === 0 && <option disabled>No models match search</option>}
                         {filteredModels.map(m => (
@@ -118,6 +120,7 @@ export default function ModelSelector({
                             }
                         }}
                         value=""
+                        suppressHydrationWarning
                     >
                         <option value="" disabled>+ Add LoRA</option>
                         {loras.map(l => (

@@ -28,7 +28,8 @@ export default function Home() {
   const [selectedModel, setSelectedModel] = useState("Loading...");
   const [selectedLoras, setSelectedLoras] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStatus, setGenerationStatus] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState<string>("");
 
   // Batch State
   const [batchSize, setBatchSize] = useState(1);
@@ -60,12 +61,25 @@ export default function Home() {
   useEffect(() => {
     if (!lastMessage) return;
 
+    console.log("WebSocket Message Received:", lastMessage);
+
     if (lastMessage.type === 'progress') {
       setProgress({ value: lastMessage.data.value, max: lastMessage.data.max });
     }
 
-    // Refresh Gallery on any completion event from WebSocket
-    if (lastMessage.type === 'executed' || (lastMessage.type === 'executing' && lastMessage.data.node === null)) {
+    if (lastMessage.type === 'execution_start') {
+      setIsProcessing(true);
+    }
+
+    // Refresh Gallery on any completion event from WebSocket or backend auto-save
+    if (
+      lastMessage.type === 'gallery_updated' ||
+      lastMessage.type === 'executed' ||
+      (lastMessage.type === 'executing' && lastMessage.data.node === null)
+    ) {
+      if (lastMessage.type === 'executed' || (lastMessage.type === 'executing' && lastMessage.data.node === null)) {
+        setIsProcessing(false);
+      }
       setGalleryRefresh(prev => prev + 1);
     }
   }, [lastMessage]);
@@ -126,26 +140,7 @@ export default function Home() {
           const result = await waitForCompletion(res.prompt_id);
 
           if (result.status === 'success') {
-            // Auto-Save to Gallery (Handle Batch)
-            const filesToSave = result.data.filenames && result.data.filenames.length > 0
-              ? result.data.filenames
-              : [result.data.filename];
-
-            for (const fname of filesToSave) {
-              await saveToGallery({
-                filename: fname,
-                subfolder: result.data.subfolder || "",
-                prompt_positive: positivePrompt,
-                prompt_negative: negativePrompt,
-                model: selectedModel,
-                width,
-                height,
-                steps,
-                cfg,
-              });
-            }
-
-            // Refresh Gallery
+            // Trigger refresh immediately after successful generation
             setGalleryRefresh(prev => prev + 1);
           } else {
             setGenerationStatus(`Batch ${i + 1} Failed`);
@@ -160,6 +155,7 @@ export default function Home() {
       setGenerationStatus("Error sending request");
     } finally {
       setIsGenerating(false);
+      setIsProcessing(false); // Ensure snake border stops
       setProgress({ value: 0, max: 0 });
     }
   };
@@ -226,7 +222,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-matrix flex flex-col">
+    <div className="min-h-screen bg-matrix flex flex-col" suppressHydrationWarning>
       {/* Header with Connection Status */}
       <Header />
 
@@ -234,7 +230,7 @@ export default function Home() {
       <main className="flex-1 p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Prompt Builder */}
         <div className="lg:col-span-2 space-y-4">
-          <div className={`glass-card card-3d-cinematic p-6 animate-fade-in-up stagger-1 relative ${isGenerating ? 'snake-active' : ''}`}>
+          <div className={`glass-card card-3d-cinematic p-6 animate-fade-in-up stagger-1 relative ${isProcessing ? 'snake-active' : ''}`}>
 
             {/* Action Bar */}
             <div className="absolute top-6 right-6 flex gap-2 z-10">
@@ -358,6 +354,7 @@ export default function Home() {
                     value={batchSize}
                     onChange={(e) => setBatchSize(Number(e.target.value))}
                     className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                    suppressHydrationWarning
                   />
                 </div>
                 <div>
@@ -372,6 +369,7 @@ export default function Home() {
                     value={batchCount}
                     onChange={(e) => setBatchCount(Number(e.target.value))}
                     className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                    suppressHydrationWarning
                   />
                 </div>
               </div>
@@ -453,6 +451,7 @@ export default function Home() {
                   value={steps}
                   onChange={(e) => setSteps(Number(e.target.value))}
                   className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                  suppressHydrationWarning
                 />
               </div>
 
@@ -470,6 +469,7 @@ export default function Home() {
                   value={cfg}
                   onChange={(e) => setCfg(Number(e.target.value))}
                   className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                  suppressHydrationWarning
                 />
               </div>
 
@@ -481,6 +481,7 @@ export default function Home() {
                   value={sampler}
                   onChange={(e) => setSampler(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-emerald-400 focus:border-emerald-500/50 focus:outline-none appearance-none cursor-pointer"
+                  suppressHydrationWarning
                 >
                   <option value="res_multistep">res_multistep</option>
                   <option value="euler">euler</option>

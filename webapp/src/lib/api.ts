@@ -19,9 +19,6 @@ const getWsUrl = () => {
     if (typeof window !== 'undefined') {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.host;
-        if (host.includes('localhost') || host.includes('127.0.0.1')) {
-            return `${protocol}//${window.location.hostname}:8000/api/comfy/ws`;
-        }
         return `${protocol}//${host}/api/comfy/ws`;
     }
     return 'ws://localhost:8000/api/comfy/ws';
@@ -215,7 +212,7 @@ export interface GalleryItemCreate {
 
 export const fetchGallery = async (): Promise<GalleryItem[]> => {
     try {
-        const res = await fetch(`${getGalleryUrl()}`);
+        const res = await fetch(`${getGalleryUrl()}`, { cache: 'no-store' });
         return await res.json();
     } catch (e) {
         return [];
@@ -232,6 +229,12 @@ export const saveToGallery = async (item: GalleryItemCreate) => {
 
 export const deleteFromGallery = async (id: number) => {
     await fetch(`${getGalleryUrl()}/${id}`, {
+        method: 'DELETE',
+    });
+};
+
+export const clearGallery = async () => {
+    await fetch(`${getGalleryUrl()}`, {
         method: 'DELETE',
     });
 };

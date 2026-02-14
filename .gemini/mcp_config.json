@@ -1,0 +1,81 @@
+{
+  "mcpServers": {
+    "debug-dashboard": {
+      "command": "/opt/SocialMedia/backend/venv/bin/python3",
+      "args": [
+        "/opt/SocialMedia/backend/mcp_debug.py"
+      ],
+      "env": {
+        "API_BASE_URL": "http://192.168.0.35:7888"
+      }
+    },
+    "serena": {
+      "command": "/root/.local/bin/uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--transport",
+        "stdio"
+      ]
+    },
+    "playwright": {
+      "command": "/usr/bin/npx",
+      "args": [
+        "-y",
+        "@playwright/mcp",
+        "--no-sandbox"
+      ],
+      "disabled": true
+    },
+    "context7": {
+      "command": "/usr/bin/npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "env": {
+        "CONTEXT7_API_KEY": "ctx7sk-b634b6f7-a730-4cf5-be91-b13a9e201023"
+      },
+      "disabled": false
+    },
+    "sequential-thinking": {
+      "command": "/usr/bin/npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "env": {}
+    },
+    "postgres": {
+      "command": "/usr/bin/npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://root:Swiat1976@192.168.0.4:5432/Socialmedia"
+      ],
+      "disabled": true
+    },
+    "tldr": {
+      "command": "tldr-mcp",
+      "args": [
+        "--project",
+        "/opt/SocialMedia"
+      ]
+    },
+    "postiz": {
+      "serverUrl": "https://postiz.aihub.ovh/api/mcp/d3b95796cd1f5c653cefcfa885ad2e6adc34498137af43a2b428011d58b24000",
+      "disabled": true
+    },
+    "e2e-runner": {
+      "command": "/usr/bin/npx",
+      "args": [
+        "-y",
+        "-p",
+        "@matware/e2e-runner",
+        "e2e-runner-mcp"
+      ]
+    }
+  }
+}

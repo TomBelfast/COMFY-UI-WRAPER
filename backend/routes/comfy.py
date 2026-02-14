@@ -208,9 +208,23 @@ async def generate_image(request: ImageGenerateRequest, db: Session = Depends(ge
             )
             response.raise_for_status()
             result = response.json()
+            prompt_id = result["prompt_id"]
+            
+            # Register metadata for auto-save via WebSocket
+            from services.websocket_manager import get_manager
+            ws_manager = get_manager(url)
+            ws_manager.register_metadata(prompt_id, {
+                "prompt_positive": request.positive_prompt,
+                "prompt_negative": request.negative_prompt,
+                "model": request.model or "default",
+                "width": request.width,
+                "height": request.height,
+                "steps": request.steps,
+                "cfg": request.cfg
+            })
             
             return {
-                "prompt_id": result["prompt_id"],
+                "prompt_id": prompt_id,
                 "status": "queued",
                 "message": "Generation started"
             }
@@ -411,13 +425,11 @@ from fastapi import WebSocket, WebSocketDisconnect
 from services.websocket_manager import get_manager
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
     """WebSocket endpoint for real-time ComfyUI updates."""
     await websocket.accept()
-    # Note: WS cannot easily get DB session via Depends. 
-    # For now falling back to DEFAULT or we need to manage session manually.
-    # To keep it simple, we use DEFAULT_COMFYUI_URL for WS for now, or fetch new one.
-    manager = get_manager(DEFAULT_COMFYUI_URL)
+    url = get_comfy_url(db)
+    manager = get_manager(url)
     
     async def forward_message(message: Dict):
         try:
@@ -429,14 +441,12 @@ async def websocket_endpoint(websocket: WebSocket):
         await manager.add_client(forward_message)
         # Keep connection open
         while True:
-            # Just keep the connection alive, maybe handle incoming pings if needed
+            # Just keep the connection alive
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text("pong")
     except WebSocketDisconnect:
         await manager.remove_client(forward_message)
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"WebSocket error: {e}")
+        logger.error(f"WebSocket endpoint error: {e}")
         await manager.remove_client(forward_message)

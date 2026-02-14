@@ -15,9 +15,11 @@ const LogViewer: React.FC = () => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        setIsMounted(true);
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         let wsUrl = '';
 
@@ -105,7 +107,7 @@ const LogViewer: React.FC = () => {
                 {logs.length === 0 && (
                     <div className="text-muted italic">Waiting for logs...</div>
                 )}
-                {logs.map((log, i) => (
+                {isMounted && logs.map((log, i) => (
                     <div key={i} className="flex space-x-3 border-l border-emerald-mid/10 pl-2">
                         <span className="text-muted whitespace-nowrap">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                         <span className={`font-bold whitespace-nowrap transition-colors duration-500 ${log.level === 'ERROR' ? 'text-red-400' :

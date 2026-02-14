@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { GalleryItem, fetchGallery, deleteFromGallery, getImageUrl } from '@/lib/api';
+import { GalleryItem, fetchGallery, deleteFromGallery, clearGallery, getImageUrl } from '@/lib/api';
 
 interface GalleryProps {
     refreshTrigger: number;
@@ -18,15 +18,27 @@ export default function Gallery({ refreshTrigger, onSelect }: GalleryProps) {
 
     const loadGallery = async () => {
         setLoading(true);
-        const data = await fetchGallery();
-        setImages(data);
-        setLoading(false);
+        try {
+            const data = await fetchGallery();
+            setImages(data);
+        } catch (e) {
+            console.error("Gallery: Load failed", e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDelete = async (id: number, e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm("Delete this image from history? (File remains on disk)")) {
             await deleteFromGallery(id);
+            loadGallery();
+        }
+    };
+
+    const handleClearAll = async () => {
+        if (confirm("Are you SURE you want to clear the entire gallery history? (Files will remain on disk, only database records will be removed)")) {
+            await clearGallery();
             loadGallery();
         }
     };
@@ -86,15 +98,23 @@ export default function Gallery({ refreshTrigger, onSelect }: GalleryProps) {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-title text-xl mt-2">Gallery</h3>
 
-                    {/* Search Input */}
-                    <input
-                        type="text"
-                        placeholder="Search prompts..."
-                        className="input-glass py-1 px-3 text-xs w-32 border-white/10 bg-white/5 focus:border-emerald-500/50"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        suppressHydrationWarning
-                    />
+                    {/* Search & Actions */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleClearAll}
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/50 px-3 py-1 rounded text-[10px] uppercase font-bold transition-all"
+                        >
+                            Clear History
+                        </button>
+                        <input
+                            type="text"
+                            placeholder="Search prompts..."
+                            className="input-glass py-1 px-3 text-xs w-32 border-white/10 bg-white/5 focus:border-emerald-500/50"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            suppressHydrationWarning
+                        />
+                    </div>
                 </div>
 
                 {loading ? (
@@ -123,6 +143,13 @@ export default function Gallery({ refreshTrigger, onSelect }: GalleryProps) {
 
                                 {/* Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                                    <button
+                                        onClick={(e) => handleDelete(img.id, e)}
+                                        className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-red-500/20 text-white/50 hover:text-red-400 rounded-md border border-white/10 hover:border-red-500/50 transition-all"
+                                        title="Delete from history"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
                                     <p className="text-[10px] text-white/80 line-clamp-2 leading-tight mb-1">
                                         {img.prompt_positive}
                                     </p>
