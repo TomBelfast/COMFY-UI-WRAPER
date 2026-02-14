@@ -188,14 +188,14 @@ export default function CharacterWizard() {
                 )}
 
                 <div
-                    className={`h-fit max-h-[75vh] glass-card p-8 rounded-[40px] border border-white/5 relative bg-[#18181b]/30 backdrop-blur-3xl shadow-2xl transition-all duration-500 w-full flex flex-col items-center justify-center ${(isGenerating || (currentStep === 4 && isStepValid() && !hasExistingResult)) ? 'snake-active' : ''}`}
+                    className={`h-[850px] glass-card p-8 rounded-[40px] border border-white/5 relative bg-[#18181b]/30 backdrop-blur-3xl shadow-2xl transition-all duration-500 w-full flex flex-col items-center justify-start overflow-hidden ${(isGenerating || (currentStep === 4 && isStepValid() && !hasExistingResult)) ? 'snake-active' : ''}`}
                     style={{ '--snake-radius': '40px' } as React.CSSProperties}
                 >
                     {/* Background Decorative Element */}
                     <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-[120px] rounded-full -mr-48 -mt-48 animate-pulse pointer-events-none" />
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 blur-[120px] rounded-full -ml-48 -mb-48 animate-pulse pointer-events-none" />
 
-                    <div className="h-full flex flex-col relative z-10">
+                    <div className="h-full w-full flex flex-col relative z-10 pt-20">
 
                         {currentStep === 0 && (
                             <StepGender

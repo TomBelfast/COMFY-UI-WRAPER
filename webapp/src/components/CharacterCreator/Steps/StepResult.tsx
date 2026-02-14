@@ -165,105 +165,108 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
     }
 
     return (
-        <div className="flex flex-col h-full animate-fade-in items-center w-full max-w-6xl mx-auto">
-            <h2 className="text-xl font-black italic uppercase tracking-tighter text-white mb-4 text-center">
+        <div className="flex flex-col items-center w-full max-w-full mx-auto pb-20 animate-fade-in relative h-full justify-center">
+            <h2 className="text-xl font-black italic uppercase tracking-tighter text-white mb-8 text-center shrink-0">
                 Review Your <span className="text-emerald-500">Neural Decodings</span>
             </h2>
 
             {/* Main View - Side by Side Results */}
-            <div className="flex flex-wrap justify-center gap-4 w-full animate-in fade-in slide-in-from-bottom-8 duration-700">
-                {images.length > 0 ? (
-                    images.map((img, idx) => (
-                        <div
-                            key={img.id}
-                            className="relative w-full max-w-[220px] aspect-[9/16] bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-2xl group transition-all hover:scale-[1.02] hover:border-emerald-500/30"
-                        >
-                            <img
-                                src={getImageUrl(img.filename, img.subfolder, "output", img.image_data)}
-                                alt={`Result ${idx + 1}`}
-                                className="w-full h-full object-cover cursor-zoom-in group-hover:scale-110 transition-transform duration-700"
-                                onClick={() => openPreview(idx)}
-                            />
+            <div className="flex-1 w-full flex justify-center items-start mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl px-4 md:px-0">
+                    {images.length > 0 ? (
+                        images.map((img, idx) => (
+                            <div
+                                key={img.id}
+                                className="relative w-full aspect-[9/16] bg-black/40 rounded-3xl overflow-hidden border border-white/10 shadow-2xl group transition-all hover:scale-[1.02] hover:border-emerald-500/30"
+                            >
+                                <img
+                                    src={getImageUrl(img.filename, img.subfolder, "output", img.image_data)}
+                                    alt={`Result ${idx + 1}`}
+                                    className="w-full h-full object-cover cursor-zoom-in group-hover:scale-110 transition-transform duration-700"
+                                    onClick={() => openPreview(idx)}
+                                />
 
-                            {/* Actions Overlay */}
-                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                                <button
-                                    id={`download-${img.id}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        downloadImage(getImageUrl(img.filename, img.subfolder, "output", img.image_data), `character-${img.id}.png`);
-                                    }}
-                                    className="p-2 bg-black/60 hover:bg-emerald-500 rounded-lg text-white hover:text-black transition-all border border-white/10"
-                                    title="Download Image"
-                                >
-                                    <Download size={14} />
-                                </button>
-                                <button
-                                    id={`fullscreen-${img.id}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        openPreview(idx);
-                                    }}
-                                    className="p-2 bg-black/60 hover:bg-emerald-500 rounded-lg text-white hover:text-black transition-all border border-white/10"
-                                    title="Full Screen"
-                                >
-                                    <Maximize2 size={14} />
-                                </button>
-                            </div>
-
-                            {/* Overlay Info */}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-3 translate-y-2 group-hover:translate-y-0 transition-transform z-10">
-                                <div className="text-[7px] font-mono text-emerald-400 mb-1 opacity-50 uppercase">STREAM_BUFFER #{img.id}</div>
-                                <div className="flex flex-col gap-1.5">
+                                {/* Actions Overlay */}
+                                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                                     <button
-                                        id={`select-variant-${img.id}`}
-                                        onClick={() => handleSelect(img)}
-                                        className="w-full py-1.5 bg-emerald-500 text-black text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-400 transition-all"
+                                        id={`download-${img.id}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            downloadImage(getImageUrl(img.filename, img.subfolder, "output", img.image_data), `character-${img.id}.png`);
+                                        }}
+                                        className="p-3 bg-black/60 hover:bg-emerald-500 rounded-xl text-white hover:text-black transition-all border border-white/10"
+                                        title="Download Image"
                                     >
-                                        Choose Variant
+                                        <Download size={18} />
+                                    </button>
+                                    <button
+                                        id={`fullscreen-${img.id}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openPreview(idx);
+                                        }}
+                                        className="p-3 bg-black/60 hover:bg-emerald-500 rounded-xl text-white hover:text-black transition-all border border-white/10"
+                                        title="Full Screen"
+                                    >
+                                        <Maximize2 size={18} />
                                     </button>
                                 </div>
+
+                                {/* Overlay Info */}
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-6 translate-y-4 group-hover:translate-y-0 transition-transform z-10">
+                                    <div className="text-[10px] font-mono text-emerald-400 mb-2 opacity-50 uppercase">STREAM_BUFFER #{img.id}</div>
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            id={`select-variant-${img.id}`}
+                                            onClick={() => handleSelect(img)}
+                                            className="w-full py-4 bg-emerald-500 text-black text-xs font-black uppercase tracking-widest rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]"
+                                        >
+                                            Choose Variant
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
+                        ))
+                    ) : (
+                        // Loading State / Empty State - Centered in Grid
+                        <div className="col-span-1 md:col-start-2 relative w-full aspect-[9/16] bg-black/40 rounded-3xl overflow-hidden border border-white/10 flex flex-col items-center justify-center">
+                            {logic.isGenerating ? (
+                                <div className="flex flex-col items-center text-center space-y-4 z-10 p-6">
+                                    <div className="relative">
+                                        <div className="w-16 h-16 border-4 border-emerald-500/20 rounded-full animate-pulse" />
+                                        <div className="absolute inset-0 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="text-emerald-400 font-mono text-lg font-bold tracking-[0.2em] uppercase">
+                                            {progressValue.toFixed(0)}%
+                                        </div>
+                                        <div className="text-white/40 text-[8px] font-black uppercase tracking-[0.4em] animate-pulse">
+                                            Processing Batch
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center p-6 space-y-3">
+                                    <div className="text-white/20 text-[10px] font-mono uppercase">waiting_for_input_stream</div>
+                                    <button
+                                        onClick={() => logic.handleGenerate()}
+                                        className="px-4 py-1.5 bg-emerald-500 text-black font-black uppercase tracking-widest text-[9px] rounded-xl snake-active"
+                                    >
+                                        Force Generation
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    ))
-                ) : (
-                    <div className="relative w-full max-w-[280px] aspect-[9/16] bg-black/40 rounded-3xl overflow-hidden border border-white/10 flex flex-col items-center justify-center">
-                        {logic.isGenerating ? (
-                            <div className="flex flex-col items-center text-center space-y-4 z-10 p-6">
-                                <div className="relative">
-                                    <div className="w-16 h-16 border-4 border-emerald-500/20 rounded-full animate-pulse" />
-                                    <div className="absolute inset-0 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                                </div>
-                                <div className="space-y-1">
-                                    <div className="text-emerald-400 font-mono text-lg font-bold tracking-[0.2em] uppercase">
-                                        {progressValue.toFixed(0)}%
-                                    </div>
-                                    <div className="text-white/40 text-[8px] font-black uppercase tracking-[0.4em] animate-pulse">
-                                        Processing Batch
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center p-6 space-y-3">
-                                <div className="text-white/20 text-[10px] font-mono uppercase">waiting_for_input_stream</div>
-                                <button
-                                    onClick={() => logic.handleGenerate()}
-                                    className="px-4 py-1.5 bg-emerald-500 text-black font-black uppercase tracking-widest text-[9px] rounded-xl snake-active"
-                                >
-                                    Force Generation
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
-            <div className="flex gap-4 mt-6">
+            <div className="shrink-0 z-20">
                 <button
                     onClick={() => logic.handleGenerate()}
-                    className={`px-6 py-2 rounded-xl font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 text-xs ${logic.isGenerating ? 'snake-active' : ''}`}
+                    className={`px-12 py-4 rounded-xl font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 text-sm shadow-[0_0_30px_rgba(16,185,129,0.1)] hover:shadow-[0_0_50px_rgba(16,185,129,0.2)] ${logic.isGenerating ? 'snake-active' : ''}`}
                 >
-                    {logic.isGenerating ? 'Decoding...' : 'Generate More'}
+                    {logic.isGenerating ? 'Decoding...' : 'Generate More Variants'}
                 </button>
             </div>
         </div>

@@ -40,25 +40,31 @@ export default function StepHair({ hairLength, hairType, hairColor, onChange, on
     const isValid = hairLength && hairType && hairColor;
 
     return (
-        <div className="flex flex-col h-full animate-fade-in">
-
-            <div className="space-y-4">
+        <div className="flex flex-col items-center w-full max-w-full mx-auto animate-fade-in relative h-full justify-start px-4">
+            <div className="space-y-8 w-full flex flex-col items-center">
 
                 {/* 1. Hair Length */}
-                <section className="text-center">
-                    <h3 className="text-sm font-bold text-white mb-2 uppercase tracking-widest opacity-60">Hair Length</h3>
-                    <div className="flex justify-center gap-3">
+                <section className="text-center w-full max-w-5xl">
+                    <h3 className="text-[10px] font-bold text-white/40 mb-4 uppercase tracking-[0.5em]">Linear <span className="text-emerald-500">Length</span></h3>
+                    <div className="flex justify-center gap-8">
                         {HAIR_LENGTHS.map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => onChange('hairLength', item.id)}
-                                className={`group relative w-28 h-28 rounded-xl overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-center gap-1
+                                className={`group relative w-40 h-[220px] rounded-[24px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
                                     ${hairLength === item.id
-                                        ? 'border-emerald-500 bg-white/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] scale-105'
+                                        ? 'border-emerald-500 bg-white/10 shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-105'
                                         : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}`}
                             >
-                                <span className="text-3xl">{item.icon}</span>
-                                <span className={`text-[9px] font-black uppercase tracking-widest ${hairLength === item.id ? 'text-emerald-400' : 'text-white/60'}`}>
+                                <div className="absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
+                                    <img
+                                        src={`/assets/character-creator/hair-length-${item.id}.png`}
+                                        alt={item.label}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+                                </div>
+                                <span className={`relative z-10 text-[9px] font-black uppercase tracking-[0.3em] ${hairLength === item.id ? 'text-emerald-400' : 'text-white/80'}`}>
                                     {item.label}
                                 </span>
                             </button>
@@ -67,20 +73,27 @@ export default function StepHair({ hairLength, hairType, hairColor, onChange, on
                 </section>
 
                 {/* 2. Hair Type */}
-                <section className="text-center">
-                    <h3 className="text-sm font-bold text-white mb-2 uppercase tracking-widest opacity-60">Hair Type</h3>
-                    <div className="flex justify-center gap-3">
+                <section className="text-center w-full max-w-5xl">
+                    <h3 className="text-[10px] font-bold text-white/40 mb-4 uppercase tracking-[0.5em]">Structural <span className="text-emerald-500">Form</span></h3>
+                    <div className="flex justify-center gap-8">
                         {HAIR_TYPES.map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => onChange('hairType', item.id)}
-                                className={`group relative w-28 h-28 rounded-xl overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-center gap-1
+                                className={`group relative w-40 h-[220px] rounded-[24px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
                                     ${hairType === item.id
-                                        ? 'border-emerald-500 bg-white/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] scale-105'
+                                        ? 'border-emerald-500 bg-white/10 shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-105'
                                         : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}`}
                             >
-                                <span className="text-3xl">{item.icon}</span>
-                                <span className={`text-[9px] font-black uppercase tracking-widest ${hairType === item.id ? 'text-emerald-400' : 'text-white/60'}`}>
+                                <div className="absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
+                                    <img
+                                        src={`/assets/character-creator/hair-type-${item.id === 'kinky' ? 'coily' : item.id}.png`}
+                                        alt={item.label}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+                                </div>
+                                <span className={`relative z-10 text-[9px] font-black uppercase tracking-[0.3em] ${hairType === item.id ? 'text-emerald-400' : 'text-white/80'}`}>
                                     {item.label}
                                 </span>
                             </button>
@@ -89,23 +102,23 @@ export default function StepHair({ hairLength, hairType, hairColor, onChange, on
                 </section>
 
                 {/* 3. Hair Color */}
-                <section className="text-center">
-                    <h3 className="text-sm font-bold text-white mb-2 uppercase tracking-widest opacity-60">Hair Color</h3>
-                    <div className="flex flex-wrap justify-center gap-3 max-w-xl mx-auto">
+                <section className="text-center w-full">
+                    <h3 className="text-[10px] font-bold text-white/40 mb-4 uppercase tracking-[0.5em]">Chromatic <span className="text-emerald-500">Tone</span></h3>
+                    <div className="grid grid-cols-4 gap-4 max-w-3xl mx-auto px-4">
                         {HAIR_COLORS.map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => onChange('hairColor', item.id)}
-                                className={`group relative rounded-full overflow-hidden transition-all duration-300 border-2 flex items-center gap-2 pl-1 pr-3 py-1
+                                className={`group relative rounded-full overflow-hidden transition-all duration-300 border-2 flex items-center gap-3 pl-2 pr-6 py-2
                                     ${hairColor === item.id
-                                        ? 'border-emerald-500 bg-white/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] scale-105'
+                                        ? 'border-emerald-500 bg-white/10 shadow-[0_0_20px_rgba(16,185,129,0.3)] scale-105'
                                         : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'}`}
                             >
                                 <div
-                                    className="w-6 h-6 rounded-full border border-white/10"
+                                    className="w-6 h-6 rounded-full border-2 border-white/20 shadow-xl"
                                     style={{ backgroundColor: item.color }}
                                 />
-                                <span className={`text-[8px] font-black uppercase tracking-widest ${hairColor === item.id ? 'text-emerald-400' : 'text-white/60'}`}>
+                                <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${hairColor === item.id ? 'text-emerald-400' : 'text-white/60'}`}>
                                     {item.label}
                                 </span>
                             </button>
