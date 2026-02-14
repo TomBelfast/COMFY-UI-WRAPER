@@ -70,7 +70,7 @@ export default function WorkflowPage({
 
             </main>
 
-            <footer className="p-6 text-center text-white/10 text-[9px] uppercase tracking-[0.5em] font-black">
+            <footer className="p-6 text-center text-white/30 text-[9px] uppercase tracking-[0.5em] font-black">
                 Terminal Protocol v2.4.0 // Connection Established
             </footer>
             <LogViewer />

@@ -16,10 +16,10 @@
   --emerald-mid: #10b981;
   --emerald-dark: #059669;
 
-  /* Text - Increased readability */
+  /* Text - Maximum readability */
   --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.85);
-  --text-muted: rgba(255, 255, 255, 0.65);
+  --text-secondary: rgba(255, 255, 255, 0.95);
+  --text-muted: rgba(255, 255, 255, 0.85);
 
   /* Glass - More visible */
   --glass-bg: rgba(255, 255, 255, 0.06);

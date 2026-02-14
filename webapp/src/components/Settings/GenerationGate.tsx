@@ -109,14 +109,14 @@ export default function GenerationGate({
                 </div>
             )}
 
-            <span className="text-label">{gatewayName}</span>
+            <span className="text-label !text-white/60">{gatewayName}</span>
             <h2 className="text-title text-3xl mt-2 mb-6">{title}</h2>
 
             <div className="space-y-4">
                 <div>
-                    <label className="text-label block mb-2">Neural Input (Positive)</label>
+                    <label className="text-label !text-white/80 block mb-2">Neural Input (Positive)</label>
                     <textarea
-                        className="input-glass h-32 resize-none w-full focus:border-emerald-500/50 transition-all"
+                        className="input-glass h-32 resize-none w-full focus:border-emerald-500/50 transition-all placeholder:text-white/20"
                         placeholder="Describe your vision..."
                         value={positivePrompt}
                         onChange={(e) => setPositivePrompt(e.target.value)}
@@ -127,39 +127,39 @@ export default function GenerationGate({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="text-label block mb-2">Neural Filter (Negative)</label>
+                        <label className="text-label !text-white/80 block mb-2">Neural Filter (Negative)</label>
                         <input
                             id="negative-prompt"
                             type="text"
-                            className="input-glass w-full"
+                            className="input-glass w-full placeholder:text-white/20"
                             placeholder="Artifacts, low quality..."
                             value={negativePrompt}
                             onChange={(e) => setNegativePrompt(e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="text-label block mb-2">Aspect Ratio</label>
+                        <label className="text-label !text-white/80 block mb-2">Aspect Ratio</label>
                         <div className="flex gap-1">
                             <button
                                 onClick={() => { setWidth(1088); setHeight(1920); }}
-                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1088 ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'}`}
+                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1088 ? 'text-emerald-400' : 'text-white/60 hover:text-white/90'}`}
                             >
-                                <div className={`w-3.5 h-6 rounded-[1px] border-2 transition-all ${width === 1088 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/30'}`} />
-                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1088 ? 'opacity-100' : 'opacity-60'}`}>9:16</span>
+                                <div className={`w-3.5 h-6 rounded-[1px] border-2 transition-all ${width === 1088 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/50'}`} />
+                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1088 ? 'opacity-100' : 'opacity-80'}`}>9:16</span>
                             </button>
                             <button
                                 onClick={() => { setWidth(1280); setHeight(1280); }}
-                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1280 ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'}`}
+                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1280 ? 'text-emerald-400' : 'text-white/60 hover:text-white/90'}`}
                             >
-                                <div className={`w-5 h-5 rounded-[1px] border-2 transition-all ${width === 1280 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/30'}`} />
-                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1280 ? 'opacity-100' : 'opacity-60'}`}>1:1</span>
+                                <div className={`w-5 h-5 rounded-[1px] border-2 transition-all ${width === 1280 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/50'}`} />
+                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1280 ? 'opacity-100' : 'opacity-80'}`}>1:1</span>
                             </button>
                             <button
                                 onClick={() => { setWidth(1920); setHeight(1088); }}
-                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1920 ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'}`}
+                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1920 ? 'text-emerald-400' : 'text-white/60 hover:text-white/90'}`}
                             >
-                                <div className={`w-6 h-3.5 mt-1 rounded-[1px] border-2 transition-all ${width === 1920 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/30'}`} />
-                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1920 ? 'opacity-100' : 'opacity-60'}`}>16:9</span>
+                                <div className={`w-6 h-3.5 mt-1 rounded-[1px] border-2 transition-all ${width === 1920 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/50'}`} />
+                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1920 ? 'opacity-100' : 'opacity-80'}`}>16:9</span>
                             </button>
                         </div>
                     </div>
@@ -168,7 +168,7 @@ export default function GenerationGate({
                 <div className="grid grid-cols-2 gap-4 mt-1 p-4 bg-white/[0.02] rounded-xl border border-white/5">
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-white/40 uppercase font-black tracking-widest">Multi-Cast (Size)</span>
+                            <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">Multi-Cast (Size)</span>
                             <span className="text-xs font-bold text-emerald-400">{batchSize}</span>
                         </div>
                         <input
@@ -180,7 +180,7 @@ export default function GenerationGate({
                     </div>
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-white/40 uppercase font-black tracking-widest">Iterations (Count)</span>
+                            <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">Iterations (Count)</span>
                             <span className="text-xs font-bold text-emerald-400">{batchCount}</span>
                         </div>
                         <input

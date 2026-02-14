@@ -33,11 +33,11 @@ export default function ParameterPanel({
 }: ParameterPanelProps) {
     return (
         <div className="glass-card p-6 border-white/5 animate-fade-in-up stagger-2">
-            <span className="text-[10px] text-white/30 uppercase font-black tracking-widest block mb-4 border-b border-white/5 pb-2">Core Parameters</span>
+            <span className="text-[10px] text-white/50 uppercase font-black tracking-widest block mb-4 border-b border-white/5 pb-2">Core Parameters</span>
             <div className="space-y-6">
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] text-white/60 uppercase font-bold">Steps</span>
+                        <span className="text-[10px] text-white/80 uppercase font-bold">Steps</span>
                         <span className="text-xs font-bold text-emerald-500">{steps}</span>
                     </div>
                     <input
@@ -50,7 +50,7 @@ export default function ParameterPanel({
 
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] text-white/60 uppercase font-bold">CFG Force</span>
+                        <span className="text-[10px] text-white/80 uppercase font-bold">CFG Force</span>
                         <span className="text-xs font-bold text-emerald-500">{cfg}</span>
                     </div>
                     <input
@@ -63,7 +63,7 @@ export default function ParameterPanel({
 
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] text-white/60 uppercase font-bold">Sampler Engine</span>
+                        <span className="text-[10px] text-white/80 uppercase font-bold">Sampler Engine</span>
                     </div>
                     <select
                         id="param-sampler-select"
@@ -81,8 +81,8 @@ export default function ParameterPanel({
 
                 <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5">
                     <div className="flex flex-col gap-1">
-                        <span className="text-[10px] text-white/40 uppercase font-black tracking-widest leading-none mb-1">Checkpoint Module</span>
-                        <span className="text-[10px] text-emerald-500/80 font-mono break-all leading-relaxed">
+                        <span className="text-[10px] text-white/60 uppercase font-black tracking-widest leading-none mb-1">Checkpoint Module</span>
+                        <span className="text-[10px] text-emerald-400 font-mono break-all leading-relaxed">
                             {selectedModel}
                         </span>
                     </div>
