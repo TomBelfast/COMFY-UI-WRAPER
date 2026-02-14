@@ -1,6 +1,6 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { GalleryItem, fetchGallery, deleteFromGallery, clearGallery, getImageUrl } from '@/lib/api';
+import ComparisonSlider from './ComparisonSlider';
 
 interface GalleryViewProps {
     refreshTrigger: number;
@@ -31,18 +31,28 @@ export default function GalleryView({
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
+    const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
+    const [comparisonPair, setComparisonPair] = useState<{
+        original: GalleryItem;
+        upscaled: GalleryItem;
+    } | null>(null);
+    const [copied, setCopied] = useState(false);
+
+    // Derived state for the currently viewed item (Standard or Comparison-Upscaled)
+    const activeItem = comparisonPair?.upscaled ?? selectedImage;
+
     useEffect(() => {
         loadGallery();
     }, [refreshTrigger]);
 
     // Auto-select the newest image after generation completes
-    const prevRefreshTrigger = React.useRef(refreshTrigger);
+    const prevRefreshTrigger = useRef(refreshTrigger);
     useEffect(() => {
         if (refreshTrigger > prevRefreshTrigger.current) {
-            // Give a small delay to ensure images are loaded
             loadGallery().then((newImages) => {
                 if (newImages && newImages.length > 0) {
-                    // Force select the first one (newest)
+                    // If upscale was just finished, handleImageClick logic might be needed?
+                    // For now just select the newest as standard
                     setSelectedImage(newImages[0]);
                 }
             });
@@ -54,7 +64,6 @@ export default function GalleryView({
         setLoading(true);
         try {
             const data = await fetchGallery(workflowId);
-            // Sort by newest first
             const sorted = data.sort((a: GalleryItem, b: GalleryItem) => b.id - a.id);
             setImages(sorted);
             return sorted;
@@ -86,57 +95,100 @@ export default function GalleryView({
         img.model?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
-    const [copied, setCopied] = useState(false);
-
-    // When an image is selected, we sync its data to the global logic state
+    // When an image is selected/active, sync prompts
     useEffect(() => {
-        if (selectedImage) {
-            setPositivePrompt(selectedImage.prompt_positive);
-            setNegativePrompt(selectedImage.prompt_negative || "");
+        if (activeItem) {
+            setPositivePrompt(activeItem.prompt_positive);
+            setNegativePrompt(activeItem.prompt_negative || "");
         }
-    }, [selectedImage]);
+    }, [activeItem, setPositivePrompt, setNegativePrompt]);
 
     // Navigation Logic
-    const currentIndex = selectedImage ? filteredImages.findIndex(img => img.id === selectedImage.id) : -1;
+    // Navigates through filtered images based on currently viewed item ID
+    const currentIndex = activeItem ? filteredImages.findIndex(img => img.id === activeItem.id) : -1;
+
+    const handleImageClick = (img: GalleryItem) => {
+        // Only attempt pairing for upscale workflows or if img has prompt_id
+        if ((img.workflow_id === 'upscale' || workflowId === 'upscale')) {
+            // Find sibling with same prompt_id
+            const pair = images.find(other =>
+                other.id !== img.id &&
+                (
+                    (img.prompt_id && other.prompt_id === img.prompt_id) ||
+                    // Fallback for older items: matching prompt + created within small ID range
+                    (!img.prompt_id && other.prompt_positive === img.prompt_positive && Math.abs(other.id - img.id) <= 2)
+                )
+            );
+
+            if (pair) {
+                const areaA = (img.width || 0) * (img.height || 0);
+                const areaB = (pair.width || 0) * (pair.height || 0);
+
+                if (areaA < areaB) {
+                    setComparisonPair({ original: img, upscaled: pair });
+                } else {
+                    setComparisonPair({ original: pair, upscaled: img });
+                }
+                // Also clear single selection
+                setSelectedImage(null);
+                return;
+            }
+        }
+
+        // Default behavior
+        setSelectedImage(img);
+        setComparisonPair(null);
+    };
 
     const handleNext = (e?: React.MouseEvent) => {
         e?.stopPropagation();
+        // If in comparison mode, verify if next item has comparison? 
+        // For simplicity, handleNext always switches to standard single view of next item,
+        // unless handleImageClick handles it.
+        // Let's manually trigger handleImageClick for the next item so comparison logic runs again.
+
+        let nextIndex = 0;
         if (currentIndex < filteredImages.length - 1) {
-            setSelectedImage(filteredImages[currentIndex + 1]);
+            nextIndex = currentIndex + 1;
         } else {
-            setSelectedImage(filteredImages[0]); // Loop
+            nextIndex = 0;
         }
+        handleImageClick(filteredImages[nextIndex]);
     };
 
     const handlePrev = (e?: React.MouseEvent) => {
         e?.stopPropagation();
+        let prevIndex = 0;
         if (currentIndex > 0) {
-            setSelectedImage(filteredImages[currentIndex - 1]);
+            prevIndex = currentIndex - 1;
         } else {
-            setSelectedImage(filteredImages[filteredImages.length - 1]); // Loop
+            prevIndex = filteredImages.length - 1;
         }
+        handleImageClick(filteredImages[prevIndex]);
     };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (!selectedImage) return;
+            if (!selectedImage && !comparisonPair) return;
             if (e.key === 'ArrowRight') handleNext();
             if (e.key === 'ArrowLeft') handlePrev();
-            if (e.key === 'Escape') setSelectedImage(null);
+            if (e.key === 'Escape') {
+                setSelectedImage(null);
+                setComparisonPair(null);
+            }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedImage, currentIndex, filteredImages]);
+    }, [selectedImage, comparisonPair, currentIndex, filteredImages]);
 
     const copyMetadata = () => {
-        if (selectedImage) {
-            const metadataText = `Positive Prompt: ${selectedImage.prompt_positive}
-${selectedImage.prompt_negative ? `Negative Prompt: ${selectedImage.prompt_negative}` : ''}
-Model: ${selectedImage.model}
-Resolution: ${selectedImage.width}x${selectedImage.height}
-Steps: ${selectedImage.steps}
-CFG: ${selectedImage.cfg}
+        if (activeItem) {
+            const metadataText = `Positive Prompt: ${activeItem.prompt_positive}
+${activeItem.prompt_negative ? `Negative Prompt: ${activeItem.prompt_negative}` : ''}
+Model: ${activeItem.model}
+Resolution: ${activeItem.width}x${activeItem.height}
+Steps: ${activeItem.steps}
+CFG: ${activeItem.cfg}
 ---
 Generated via Cinematic Matrix`.trim();
 
@@ -187,7 +239,7 @@ Generated via Cinematic Matrix`.trim();
                                 className={`relative group rounded-lg overflow-hidden bg-black/20 cursor-pointer border border-white/5 hover:border-emerald-500/50 transition-all ${img.prompt_positive.toLowerCase().includes(searchTerm.toLowerCase()) ? '' : 'opacity-50 grayscale'
                                     }`}
                                 style={{ aspectRatio: `${img.width} / ${img.height}` }}
-                                onClick={() => setSelectedImage(img)}
+                                onClick={() => handleImageClick(img)}
                             >
                                 <img
                                     src={getImageUrl(img.filename, img.subfolder)}
@@ -203,7 +255,7 @@ Generated via Cinematic Matrix`.trim();
                                         className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-red-500/20 text-white/50 hover:text-red-400 rounded-md border border-white/10 hover:border-red-500/50 transition-all"
                                         title="Delete from history"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path></svg>
                                     </button>
                                     <p className="text-[10px] text-white/80 line-clamp-2 leading-tight mb-1">
                                         {img.prompt_positive}
@@ -218,19 +270,39 @@ Generated via Cinematic Matrix`.trim();
                 )}
             </div>
 
-            {/* Fullscreen UI */}
-            {selectedImage && (
-                <div className="fixed inset-0 z-[100] bg-[#121212] animate-fade-in flex flex-col md:flex-row overflow-hidden" onClick={() => setSelectedImage(null)}>
+            {/* FULLSCREEN MODAL - UNIFIED */}
+            {(selectedImage || comparisonPair) && (
+                <div className="fixed inset-0 z-[100] bg-[#121212] animate-fade-in flex flex-col md:flex-row overflow-hidden"
+                    onClick={() => {
+                        setSelectedImage(null);
+                        setComparisonPair(null);
+                    }}
+                >
                     {/* Synchronized Global Grid UNDER everything */}
                     <div className="absolute inset-0 bg-matrix opacity-20 pointer-events-none" />
 
-                    {/* Main Image Area - Luminous Atmosphere */}
-                    <div className="flex-1 relative flex flex-col items-center justify-center p-4 cursor-zoom-out overflow-hidden">
-                        {/* Background Layer (Explicitly Behind EVERYTHING) */}
-                        <div className="absolute inset-0 z-0 pointer-events-none">
+                    {/* Main Image Area */}
+                    <div className="flex-1 relative flex flex-col items-center justify-center p-4 cursor-zoom-out overflow-hidden" onClick={e => e.stopPropagation()}>
+
+                        {/* Background Layer */}
+                        <div className="absolute inset-0 z-0 pointer-events-none" onClick={() => {
+                            setSelectedImage(null);
+                            setComparisonPair(null);
+                        }}>
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.05)_0%,transparent_70%)]" />
                             <div className="absolute inset-0 bg-white/[0.01] backdrop-blur-[2px]" />
                         </div>
+
+                        {/* Close Button */}
+                        <button
+                            onClick={() => {
+                                setSelectedImage(null);
+                                setComparisonPair(null);
+                            }}
+                            className="absolute top-6 right-6 z-50 p-3 bg-black/60 hover:bg-red-500/20 text-white/70 hover:text-red-400 rounded-full border border-white/10 transition-all hover:scale-110"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                        </button>
 
                         {/* Nav Buttons */}
                         <button
@@ -247,76 +319,86 @@ Generated via Cinematic Matrix`.trim();
                             <svg className="w-8 h-8 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                         </button>
 
-                        <div className={`relative z-20 mb-20 transition-all duration-700 ease-out ${isGenerating ? 'scale-95' : 'scale-100'}`}>
-                            {/* Aura Glow Effect */}
-                            <div className={`absolute inset-0 bg-emerald-500/20 blur-[120px] rounded-full transition-opacity duration-1000 z-0 ${isGenerating ? 'opacity-100 animate-aura-pulse' : 'opacity-0'}`} />
+                        {/* Comparison Mode Indicator */}
+                        {comparisonPair && (
+                            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-3 pointer-events-none z-50">
+                                <div className="px-4 py-1.5 bg-emerald-900/40 backdrop-blur-md border border-emerald-500/30 rounded-full flex items-center gap-3 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                                    <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Comparison Mode</span>
+                                </div>
+                            </div>
+                        )}
 
-                            {/* Snake Border Container */}
-                            {isGenerating && (
-                                <div className="absolute -inset-[3px] rounded-lg overflow-hidden pointer-events-none z-0">
-                                    <div className="absolute inset-[-50%] bg-[conic-gradient(transparent_0deg,transparent_90deg,#10b981_180deg,transparent_270deg)] animate-[spin_4s_linear_infinite]" />
+                        {/* Image / Slider Container */}
+                        <div className={`relative z-20 transition-all duration-700 ease-out w-full h-full flex items-center justify-center ${isGenerating ? 'scale-95' : 'scale-100'}`}>
+
+                            {comparisonPair ? (
+                                <div className="w-full h-full max-w-[95vw] max-h-[90vh]">
+                                    <ComparisonSlider
+                                        original={comparisonPair.original}
+                                        upscaled={comparisonPair.upscaled}
+                                    />
+                                </div>
+                            ) : selectedImage && (
+                                <div className={`relative rounded-lg overflow-hidden z-10 ${isGenerating ? 'p-[2px]' : ''}`}>
+                                    {/* Aura Glow Effect */}
+                                    <div className={`absolute inset-0 bg-emerald-500/20 blur-[120px] rounded-full transition-opacity duration-1000 z-0 ${isGenerating ? 'opacity-100 animate-aura-pulse' : 'opacity-0'}`} />
+
+                                    {/* Snake Border Container */}
+                                    {isGenerating && (
+                                        <div className="absolute -inset-[3px] rounded-lg overflow-hidden pointer-events-none z-0">
+                                            <div className="absolute inset-[-50%] bg-[conic-gradient(transparent_0deg,transparent_90deg,#10b981_180deg,transparent_270deg)] animate-[spin_4s_linear_infinite]" />
+                                        </div>
+                                    )}
+
+                                    <img
+                                        key={selectedImage.id}
+                                        src={getImageUrl(selectedImage.filename, selectedImage.subfolder)}
+                                        alt={selectedImage.prompt_positive}
+                                        className={`max-w-full max-h-[85vh] object-contain shadow-[0_30px_100px_rgba(0,0,0,0.5)] transition-all duration-1000 ${isGenerating ? 'opacity-40 blur-[4px] grayscale-[0.5]' : 'opacity-100 blur-0 grayscale-0 animate-matrix-decode'}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+
+                                    {isGenerating && (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm z-30">
+                                            <div className="w-64 h-1 bg-white/10 rounded-full overflow-hidden mb-4 relative">
+                                                <div
+                                                    className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out relative z-10"
+                                                    style={{ width: `${(progress.value / (progress.max || 1)) * 100}%` }}
+                                                />
+                                                <div className="absolute inset-0 bg-emerald-500/20 blur-md" style={{ width: `${(progress.value / (progress.max || 1)) * 100}%` }} />
+                                            </div>
+                                            <div className="text-emerald-400 font-mono text-sm tracking-widest uppercase animate-pulse drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
+                                                Matrix Generation {((progress.value / (progress.max || 1)) * 100).toFixed(0)}%
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
+                        </div>
 
-                            <div className={`relative rounded-lg overflow-hidden bg-[#121212] z-10 ${isGenerating ? 'p-[2px]' : ''}`}>
-                                <img
-                                    key={selectedImage.id}
-                                    src={getImageUrl(selectedImage.filename, selectedImage.subfolder)}
-                                    alt={selectedImage.prompt_positive}
-                                    className={`max-w-full max-h-[72vh] object-contain shadow-[0_30px_100px_rgba(0,0,0,0.5)] transition-all duration-1000 ${isGenerating ? 'opacity-40 blur-[4px] grayscale-[0.5]' : 'opacity-100 blur-0 grayscale-0 animate-matrix-decode'}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-
-                                {/* Progress Overlay */}
-                                {isGenerating && (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm z-30">
-                                        <div className="w-64 h-1 bg-white/10 rounded-full overflow-hidden mb-4 relative">
-                                            <div
-                                                className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out relative z-10"
-                                                style={{ width: `${(progress.value / (progress.max || 1)) * 100}%` }}
-                                            />
-                                            {/* Progress Glow */}
-                                            <div className="absolute inset-0 bg-emerald-500/20 blur-md" style={{ width: `${(progress.value / (progress.max || 1)) * 100}%` }} />
-                                        </div>
-                                        <div className="text-emerald-400 font-mono text-sm tracking-widest uppercase animate-pulse drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]">
-                                            Matrix Generation {((progress.value / (progress.max || 1)) * 100).toFixed(0)}%
-                                        </div>
-                                    </div>
-                                )}
+                        {/* Image Index Indicator (Standard only) */}
+                        {!comparisonPair && (
+                            <div className="absolute top-6 left-1/2 -translate-x-1/2 px-4 py-1 bg-black/50 backdrop-blur-md border border-white/10 rounded-full text-[10px] text-emerald-500 font-mono tracking-widest uppercase pointer-events-none border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                                CREATION {currentIndex + 1} / {filteredImages.length}
                             </div>
-                        </div>
-
-                        {/* Image Index Indicator */}
-                        <div className="absolute top-6 left-1/2 -translate-x-1/2 px-4 py-1 bg-black/50 backdrop-blur-md border border-white/10 rounded-full text-[10px] text-emerald-500 font-mono tracking-widest uppercase">
-                            CREATION {currentIndex + 1} / {filteredImages.length}
-                        </div>
+                        )}
 
                         {/* Thumbnail Strip */}
-                        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 px-10" onClick={e => e.stopPropagation()}>
+                        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 px-10 pointer-events-auto z-50" onClick={e => e.stopPropagation()}>
                             <div className="flex gap-2 max-w-full overflow-x-auto pb-2 px-2 custom-scrollbar mask-fade-edges">
                                 {filteredImages.map((img, idx) => (
                                     <div
                                         key={img.id}
-                                        onClick={() => setSelectedImage(img)}
-                                        className={`w-14 h-20 flex-shrink-0 cursor-pointer rounded border-2 transition-all ${idx === currentIndex ? 'border-emerald-500 scale-110' : 'border-white/10 opacity-40 hover:opacity-100'}`}
+                                        onClick={() => handleImageClick(img)}
+                                        className={`relative w-16 h-16 rounded overflow-hidden cursor-pointer transition-all duration-300 border ${(selectedImage?.id === img.id || comparisonPair?.upscaled.id === img.id || comparisonPair?.original.id === img.id)
+                                                ? 'border-emerald-500 scale-110 shadow-[0_0_15px_#10b981]'
+                                                : 'border-white/10 opacity-50 hover:opacity-100 hover:border-white/30'
+                                            }`}
                                     >
-                                        <img
-                                            src={getImageUrl(img.filename, img.subfolder)}
-                                            className="w-full h-full object-cover rounded-sm"
-                                        />
+                                        <img src={getImageUrl(img.filename, img.subfolder)} className="w-full h-full object-cover" loading="lazy" />
                                     </div>
                                 ))}
                             </div>
-                        </div>
-
-                        {/* Overlay Controls */}
-                        <div className="absolute top-4 right-4 flex gap-2 z-30">
-                            <button
-                                onClick={() => setSelectedImage(null)}
-                                className="bg-black/50 hover:bg-red-500/20 text-white/50 hover:text-red-400 rounded-full p-2 backdrop-blur-md transition-all border border-white/10 hover:border-red-500/50"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                            </button>
                         </div>
                     </div>
 
@@ -325,8 +407,9 @@ Generated via Cinematic Matrix`.trim();
                         className="w-full md:w-80 lg:w-[450px] bg-white/[0.06] backdrop-blur-[60px] border-l border-white/[0.15] flex flex-col h-[60vh] md:h-full z-40 relative overflow-hidden shadow-[-20px_0_100px_rgba(0,0,0,0.5)]"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Matrix Grid Overlay (Local accent) */}
+                        {/* Matrix Grid Overlay */}
                         <div className="absolute inset-0 bg-matrix opacity-10 pointer-events-none" />
+
                         <div className="p-6 border-b border-white/[0.1] flex justify-between items-center bg-white/[0.04] backdrop-blur-md relative z-10">
                             <h3 className="text-title text-xl tracking-[0.4em]">Gallery View</h3>
                             <button
@@ -343,9 +426,11 @@ Generated via Cinematic Matrix`.trim();
                                     <label className="text-label !text-emerald-400">Neural Sequence (Positive)</label>
                                     <button
                                         onClick={() => {
-                                            navigator.clipboard.writeText(positivePrompt);
-                                            setCopied(true);
-                                            setTimeout(() => setCopied(false), 1500);
+                                            if (activeItem) {
+                                                navigator.clipboard.writeText(activeItem.prompt_positive);
+                                                setCopied(true);
+                                                setTimeout(() => setCopied(false), 1500);
+                                            }
                                         }}
                                         className="text-[9px] text-emerald-500/50 hover:text-emerald-400 uppercase tracking-tighter transition-colors"
                                     >
@@ -364,9 +449,11 @@ Generated via Cinematic Matrix`.trim();
                                     <label className="text-label !text-red-400">Neural Rejection</label>
                                     <button
                                         onClick={() => {
-                                            navigator.clipboard.writeText(negativePrompt);
-                                            setCopied(true);
-                                            setTimeout(() => setCopied(false), 1500);
+                                            if (activeItem) {
+                                                navigator.clipboard.writeText(activeItem.prompt_negative || "");
+                                                setCopied(true);
+                                                setTimeout(() => setCopied(false), 1500);
+                                            }
                                         }}
                                         className="text-[9px] text-red-500/50 hover:text-red-400 uppercase tracking-tighter transition-colors"
                                     >
@@ -383,25 +470,24 @@ Generated via Cinematic Matrix`.trim();
                             <div className="flex-shrink-0 space-y-2">
                                 <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.1] group hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-300">
                                     <span className="text-label !text-[9px] !text-emerald-400 block mb-1">Active Neural Model</span>
-                                    <span className="text-[10px] text-white font-mono font-bold break-all block leading-tight">{selectedImage.model}</span>
+                                    <span className="text-[10px] text-white font-mono font-bold break-all block leading-tight">{activeItem?.model}</span>
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-2">
                                     <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.1] group hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-300">
                                         <span className="text-label !text-[8px] !text-emerald-400 block mb-1">Resolution</span>
-                                        <span className="text-[10px] text-white/90 font-mono font-bold block">{selectedImage.width}x{selectedImage.height}</span>
+                                        <span className="text-[10px] text-white/90 font-mono font-bold block">{activeItem?.width}x{activeItem?.height}</span>
                                     </div>
                                     <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.1] group hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-300">
                                         <span className="text-label !text-[8px] !text-emerald-400 block mb-1">Steps</span>
-                                        <span className="text-[10px] text-white/90 font-mono font-bold block">{selectedImage.steps}</span>
+                                        <span className="text-[10px] text-white/90 font-mono font-bold block">{activeItem?.steps}</span>
                                     </div>
                                     <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.1] group hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-300">
                                         <span className="text-label !text-[8px] !text-emerald-400 block mb-1">CFG</span>
-                                        <span className="text-[10px] text-emerald-400 font-mono font-black block">{selectedImage.cfg}</span>
+                                        <span className="text-[10px] text-emerald-400 font-mono font-black block">{activeItem?.cfg}</span>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
 
                         <div className="p-4 border-t border-white/10 flex flex-col gap-3 bg-black/40 backdrop-blur-xl">
@@ -452,8 +538,11 @@ Generated via Cinematic Matrix`.trim();
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => {
-                                        onSelect(selectedImage);
-                                        setSelectedImage(null);
+                                        if (activeItem) {
+                                            onSelect(activeItem);
+                                            setSelectedImage(null);
+                                            setComparisonPair(null);
+                                        }
                                     }}
                                     className="flex-1 py-3 text-[9px] uppercase tracking-widest font-bold border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-white/60 hover:text-emerald-400 rounded-lg"
                                 >
@@ -461,13 +550,16 @@ Generated via Cinematic Matrix`.trim();
                                 </button>
                                 <button
                                     onClick={(e) => {
-                                        handleDelete(selectedImage.id, e);
-                                        setSelectedImage(null);
+                                        if (activeItem) {
+                                            handleDelete(activeItem.id, e);
+                                            setSelectedImage(null);
+                                            setComparisonPair(null);
+                                        }
                                     }}
                                     className="px-4 border border-white/5 hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 text-white/10 rounded-lg transition-all"
                                     title="Purge Record"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path></svg>
                                 </button>
                             </div>
                         </div>

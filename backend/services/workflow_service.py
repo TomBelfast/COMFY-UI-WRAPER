@@ -37,19 +37,185 @@ FLUX_WORKFLOW = {
     "7": {"inputs": {"filename_prefix": "flux_wrapper_", "images": ["6", 0]}, "class_type": "SaveImage"}
 }
 
-# Z-Turbo Upscale Workflow (SeedVR2 Integrated)
+# Z-Turbo Upscale Workflow (SeedVR2 Integrated) - 100% MATCH TO JSON
 UPSCALE_WORKFLOW = {
-  "48": {"inputs": {"ckpt_name": "z-image-turbo-bf16-aio.safetensors"}, "class_type": "CheckpointLoaderSimple"},
-  "49": {"inputs": {"conditioning": ["54", 0]}, "class_type": "ConditioningZeroOut"},
-  "50": {"inputs": {"samples": ["52", 0], "vae": ["48", 2]}, "class_type": "VAEDecode"},
-  "52": {"inputs": {"seed": 0, "steps": 8, "cfg": 1, "sampler_name": "res_multistep", "scheduler": "simple", "denoise": 1, "model": ["48", 0], "positive": ["54", 0], "negative": ["49", 0], "latent_image": ["55", 0]}, "class_type": "KSampler"},
-  "53": {"inputs": {"filename_prefix": "z-turbo-pre/", "images": ["50", 0]}, "class_type": "SaveImage"},
-  "54": {"inputs": {"text": "", "clip": ["48", 1]}, "class_type": "CLIPTextEncode"},
-  "55": {"inputs": {"width": 1088, "height": 1920, "batch_size": 1}, "class_type": "EmptySD3LatentImage"},
-  "60": {"inputs": {"model": "seedvr2_ema_7b_sharp_fp16.safetensors", "device": "cuda:0", "blocks_to_swap": 36, "offload_device": "cpu"}, "class_type": "SeedVR2LoadDiTModel"},
-  "61": {"inputs": {"model": "ema_vae_fp16.safetensors", "device": "cuda:0", "encode_tiled": True, "decode_tiled": True, "offload_device": "cpu"}, "class_type": "SeedVR2LoadVAEModel"},
-  "62": {"inputs": {"seed": 0, "resolution": 4096, "max_resolution": 4096, "batch_size": 1, "color_correction": "lab", "image": ["50", 0], "dit": ["60", 0], "vae": ["61", 0]}, "class_type": "SeedVR2VideoUpscaler"},
-  "64": {"inputs": {"filename_prefix": "z-turbo-up/", "images": ["62", 0]}, "class_type": "SaveImage"}
+  "48": {
+    "inputs": {
+      "ckpt_name": "z-image-turbo-bf16-aio.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "49": {
+    "inputs": {
+      "conditioning": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut"
+  },
+  "50": {
+    "inputs": {
+      "samples": [
+        "52",
+        0
+      ],
+      "vae": [
+        "48",
+        2
+      ]
+    },
+    "class_type": "VAEDecode"
+  },
+  "52": {
+    "inputs": {
+      "seed": 2025,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "48",
+        0
+      ],
+      "positive": [
+        "54",
+        0
+      ],
+      "negative": [
+        "49",
+        0
+      ],
+      "latent_image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "KSampler"
+  },
+  "53": {
+    "inputs": {
+      "filename_prefix": "z-image/a",
+      "images": [
+        "50",
+        0
+      ]
+    },
+    "class_type": "SaveImage"
+  },
+  "54": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "48",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "55": {
+    "inputs": {
+      "width": 1088,
+      "height": 1920,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage"
+  },
+  "60": {
+    "inputs": {
+      "model": "seedvr2_ema_7b_sharp_fp16.safetensors",
+      "device": "cuda:0",
+      "blocks_to_swap": 36,
+      "swap_io_components": False,
+      "offload_device": "cpu",
+      "cache_model": False,
+      "attention_mode": "sdpa"
+    },
+    "class_type": "SeedVR2LoadDiTModel"
+  },
+  "61": {
+    "inputs": {
+      "model": "ema_vae_fp16.safetensors",
+      "device": "cuda:0",
+      "encode_tiled": True,
+      "encode_tile_size": 1024,
+      "encode_tile_overlap": 128,
+      "decode_tiled": True,
+      "decode_tile_size": 1024,
+      "decode_tile_overlap": 128,
+      "tile_debug": "false",
+      "offload_device": "cpu",
+      "cache_model": False
+    },
+    "class_type": "SeedVR2LoadVAEModel"
+  },
+  "62": {
+    "inputs": {
+      "seed": 2026,
+      "resolution": 4096,
+      "max_resolution": 4096,
+      "batch_size": 1,
+      "uniform_batch_size": False,
+      "color_correction": "lab",
+      "temporal_overlap": 0,
+      "prepend_frames": 0,
+      "input_noise_scale": 0,
+      "latent_noise_scale": 0,
+      "offload_device": "cpu",
+      "enable_debug": False,
+      "image": [
+        "50",
+        0
+      ],
+      "dit": [
+        "60",
+        0
+      ],
+      "vae": [
+        "61",
+        0
+      ]
+    },
+    "class_type": "SeedVR2VideoUpscaler"
+  },
+  "64": {
+    "inputs": {
+      "filename_prefix": "z-image/b",
+      "images": [
+        "62",
+        0
+      ]
+    },
+    "class_type": "SaveImage"
+  },
+  "66": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": True,
+            "url": ""
+          },
+          {
+            "name": "B",
+            "selected": True,
+            "url": ""
+          }
+        ]
+      },
+      "image_a": [
+        "50",
+        0
+      ],
+      "image_b": [
+        "62",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)"
+  }
 }
 
 def build_comfy_workflow(request: ImageGenerateRequest) -> Dict[str, Any]:
@@ -82,15 +248,16 @@ def build_comfy_workflow(request: ImageGenerateRequest) -> Dict[str, Any]:
         workflow["55"]["inputs"]["width"] = request.width
         workflow["55"]["inputs"]["height"] = request.height
         # Node 52: KSampler
-        seed_val = random.randint(0, 2**53 - 1)
+        seed_val = random.randint(0, 2**32 - 1)
         workflow["52"]["inputs"]["seed"] = seed_val
         workflow["52"]["inputs"]["steps"] = request.steps
         workflow["52"]["inputs"]["cfg"] = request.cfg
         workflow["52"]["inputs"]["sampler_name"] = request.sampler_name
+        workflow["52"]["inputs"]["scheduler"] = "simple"
+        workflow["52"]["inputs"]["denoise"] = 1
         
         # Node 62: Upscaler Seed
-        # Sometimes upscale needs a different seed increment to avoid patterns
-        workflow["62"]["inputs"]["seed"] = random.randint(0, 2**53 - 1)
+        workflow["62"]["inputs"]["seed"] = random.randint(0, 2**32 - 1)
         
         print(f"DEBUG: Generated UPSCALE workflow with seed {seed_val}")
         return workflow
@@ -116,7 +283,7 @@ def build_comfy_workflow(request: ImageGenerateRequest) -> Dict[str, Any]:
     # 4. Set Sampler (Seed, Steps, CFG)
     sampler_node_id = "5"
     if sampler_node_id in workflow:
-        workflow[sampler_node_id]["inputs"]["seed"] = random.randint(0, 2**53 - 1)
+        workflow[sampler_node_id]["inputs"]["seed"] = random.randint(0, 2**32 - 1)
         workflow[sampler_node_id]["inputs"]["steps"] = request.steps
         workflow[sampler_node_id]["inputs"]["cfg"] = request.cfg
         workflow[sampler_node_id]["inputs"]["sampler_name"] = request.sampler_name

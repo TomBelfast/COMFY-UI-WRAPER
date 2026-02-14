@@ -1,7 +1,7 @@
 
 "use client";
 
-import { GalleryItem, getImageUrl } from "@/lib/api";
+import { GalleryItem, getThumbnailUrl } from "@/lib/api";
 
 interface GalleryGridProps {
     loading: boolean;
@@ -31,7 +31,7 @@ export default function GalleryGrid({ loading, images, onImageClick, onDelete }:
                     onClick={() => onImageClick(img)}
                 >
                     <img
-                        src={getImageUrl(img.filename, img.subfolder)}
+                        src={getThumbnailUrl(img.filename, img.subfolder, 300)}
                         alt={img.prompt_positive}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"

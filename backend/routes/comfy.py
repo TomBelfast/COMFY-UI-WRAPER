@@ -7,10 +7,12 @@ import random
 import logging
 from typing import Dict, Any
 
+import io
 import httpx
 from fastapi import APIRouter, HTTPException, Query, Depends, WebSocket, WebSocketDisconnect
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session
+from PIL import Image
 
 from database import get_db, AppConfig
 from schemas.comfy_schemas import ImageGenerateRequest, ImageStatusResponse
@@ -187,23 +189,58 @@ async def get_image(
     subfolder: str = Query(""),
     db: Session = Depends(get_db)
 ):
-    """Proxy image from ComfyUI."""
+    """Proxy image from ComfyUI with cache headers."""
     url = get_comfy_url(db)
     try:
         image_url = f"{url}/view?filename={filename}&type={type}"
         if subfolder:
             image_url += f"&subfolder={subfolder}"
-        
+
         async with httpx.AsyncClient(timeout=60.0, trust_env=False) as client:
             response = await client.get(image_url)
             response.raise_for_status()
-            
-            return StreamingResponse(
-                iter([response.content]),
-                media_type=response.headers.get("content-type", "image/png")
+
+            return Response(
+                content=response.content,
+                media_type=response.headers.get("content-type", "image/png"),
+                headers={"Cache-Control": "public, max-age=86400, immutable"}
             )
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Image not found: {str(e)}")
+
+@router.get("/thumbnail")
+async def get_thumbnail(
+    filename: str = Query(...),
+    type: str = Query("output"),
+    subfolder: str = Query(""),
+    max_size: int = Query(300, ge=50, le=600),
+    db: Session = Depends(get_db)
+):
+    """Return a resized thumbnail preserving aspect ratio."""
+    url = get_comfy_url(db)
+    try:
+        image_url = f"{url}/view?filename={filename}&type={type}"
+        if subfolder:
+            image_url += f"&subfolder={subfolder}"
+
+        async with httpx.AsyncClient(timeout=60.0, trust_env=False) as client:
+            response = await client.get(image_url)
+            response.raise_for_status()
+
+        img = Image.open(io.BytesIO(response.content))
+        img.thumbnail((max_size, max_size), Image.LANCZOS)
+
+        buf = io.BytesIO()
+        img.save(buf, format="WEBP", quality=80)
+        buf.seek(0)
+
+        return Response(
+            content=buf.getvalue(),
+            media_type="image/webp",
+            headers={"Cache-Control": "public, max-age=604800, immutable"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Thumbnail error: {str(e)}")
 
 @router.get("/loras")
 async def get_available_loras(db: Session = Depends(get_db)):
@@ -252,31 +289,47 @@ async def get_available_models(db: Session = Depends(get_db)):
 
 @router.post("/interrupt")
 async def interrupt_generation(db: Session = Depends(get_db)):
-    """Interrupt current generation."""
+    """Interrupt current generation, clear queue and free memory."""
     url = get_comfy_url(db)
     try:
-        async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
+        async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
+            # 1. Interrupt current execution
             await client.post(f"{url}/interrupt")
-            return {"status": "interrupted"}
+            # 2. Clear the entire queue (pending + running)
+            await client.post(f"{url}/queue", json={"clear": True})
+            # 3. Free memory and unload models
+            await client.post(f"{url}/free", json={"unload_models": True, "free_memory": True})
+            return {"status": "interrupted", "message": "Generation interrupted, queue cleared, memory freed"}
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
 
 @router.post("/clear-vram")
 async def clear_vram(db: Session = Depends(get_db)):
-    """Clear ComfyUI VRAM and RAM."""
+    """Clear ComfyUI VRAM and RAM - interrupt first if anything is running."""
     url = get_comfy_url(db)
     try:
-        async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
+        async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
+            # Interrupt first to ensure nothing holds the GPU
+            await client.post(f"{url}/interrupt")
+            await client.post(f"{url}/queue", json={"clear": True})
             await client.post(f"{url}/free", json={"unload_models": True, "free_memory": True})
-            return {"status": "cleared", "message": "VRAM and RAM cleared"}
+            return {"status": "cleared", "message": "VRAM and RAM cleared, queue emptied"}
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time ComfyUI updates."""
     await websocket.accept()
-    url = get_comfy_url(db)
+    
+    # Get DB session manually to ensure it's closed immediately
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        url = get_comfy_url(db)
+    finally:
+        db.close()
+
     manager = get_manager(url)
     
     async def forward_message(message: Dict):

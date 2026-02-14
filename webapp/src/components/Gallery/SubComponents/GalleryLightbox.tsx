@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { GalleryItem, getImageUrl } from "@/lib/api";
+import { GalleryItem, getImageUrl, getThumbnailUrl } from "@/lib/api";
 
 interface GalleryLightboxProps {
     item: GalleryItem;
@@ -85,8 +85,9 @@ export default function GalleryLightbox({
                                 className={`w-14 h-20 flex-shrink-0 cursor-pointer rounded border-2 transition-all ${idx === currentIndex ? 'border-emerald-500 scale-110' : 'border-white/10 opacity-40 hover:opacity-100'}`}
                             >
                                 <img
-                                    src={getImageUrl(img.filename, img.subfolder)}
+                                    src={getThumbnailUrl(img.filename, img.subfolder, 100)}
                                     className="w-full h-full object-cover rounded-sm"
+                                    loading="lazy"
                                 />
                             </div>
                         ))}

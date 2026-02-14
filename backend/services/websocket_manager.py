@@ -8,6 +8,7 @@ from database import SessionLocal, GalleryImage
 class ComfyWebSocketManager:
     def __init__(self, comfy_url: str):
         self.comfy_ws_url = comfy_url.replace("http://", "ws://").replace("https://", "wss://") + "/ws"
+        self.base_url = comfy_url
         self.client_id = "comfy_wrapper_service"
         self.ws_connection = None
         self.connected_clients: Set[Callable[[Dict], Any]] = set()
@@ -76,9 +77,11 @@ class ComfyWebSocketManager:
                             logger.info(f"ComfyUI: Starting execution for prompt {pid} (In cache: {pid in self.metadata_cache})")
                         elif event_type == "executing":
                             node = payload.get("node")
-                            if not node:
-                                logger.success("ComfyUI: Execution finished")
-                                # This is a fallback if 'executed' is not enough
+                            prompt_id = payload.get("prompt_id")
+                            if not node and prompt_id and prompt_id in self.metadata_cache:
+                                logger.success(f"ComfyUI: Execution finished for prompt {prompt_id}")
+                                # Cleanup cache ONLY when the entire prompt is done
+                                del self.metadata_cache[prompt_id]
                         elif event_type == "progress":
                             # Skip heavy progress logging unless needed
                             pass
@@ -111,38 +114,56 @@ class ComfyWebSocketManager:
         if not metadata:
             return
 
+        # 1. Collect image lists from output FIRST
+        image_lists = []
+        if "images" in output and isinstance(output["images"], list):
+            image_lists.append(output["images"])
+        else:
+            for node_id, node_output in output.items():
+                if isinstance(node_output, dict) and "images" in node_output:
+                    image_lists.append(node_output["images"])
+
+        if not image_lists:
+            return
+
+        db = None
         saved_count = 0
         try:
             db = SessionLocal()
-
-            # Collect image lists from output.
-            # ComfyUI 'executed' event sends flat: {"images": [{...}]}
-            # but could also be nested: {"node_id": {"images": [{...}]}}
-            image_lists = []
-            if "images" in output and isinstance(output["images"], list):
-                # Flat structure from 'executed' event
-                image_lists.append(output["images"])
-            else:
-                # Nested structure (node_id -> {images: [...]})
-                for node_id, node_output in output.items():
-                    if isinstance(node_output, dict) and "images" in node_output:
-                        image_lists.append(node_output["images"])
-
             for images in image_lists:
                 for img in images:
                     filename = img.get("filename")
                     subfolder = img.get("subfolder", "")
 
                     if filename:
+                        # Read actual image dimensions from ComfyUI
+                        actual_width = metadata.get("width", 1024)
+                        actual_height = metadata.get("height", 1024)
+                        try:
+                            import httpx
+                            from PIL import Image
+                            import io
+                            view_url = f"{self.base_url}/view?filename={filename}&subfolder={subfolder}&type=output"
+                            async with httpx.AsyncClient(timeout=10.0, trust_env=False) as http_client:
+                                resp = await http_client.get(view_url)
+                                if resp.status_code == 200:
+                                    pil_img = Image.open(io.BytesIO(resp.content))
+                                    actual_width = pil_img.size[0]
+                                    actual_height = pil_img.size[1]
+                                    logger.debug(f"AUTO-SAVE: Real dimensions for {filename}: {actual_width}x{actual_height}")
+                        except Exception as dim_err:
+                            logger.warning(f"AUTO-SAVE: Could not read dimensions for {filename}: {dim_err}")
+
                         db_image = GalleryImage(
+                            prompt_id=prompt_id,
                             filename=filename,
                             subfolder=subfolder,
                             workflow_id=metadata.get("workflow_id", "default"),
                             prompt_positive=metadata.get("prompt_positive", ""),
                             prompt_negative=metadata.get("prompt_negative", ""),
                             model=metadata.get("model", ""),
-                            width=metadata.get("width", 1024),
-                            height=metadata.get("height", 1024),
+                            width=actual_width,
+                            height=actual_height,
                             steps=metadata.get("steps", 20),
                             cfg=metadata.get("cfg", 1.0)
                         )
@@ -166,13 +187,12 @@ class ComfyWebSocketManager:
             else:
                 logger.warning(f"AUTO-SAVE: No images found in output for prompt {prompt_id}. Output keys: {list(output.keys())}")
 
-            # Cleanup cache
-            del self.metadata_cache[prompt_id]
 
         except Exception as e:
             logger.error(f"Failed to auto-save images for prompt {prompt_id}: {e}")
         finally:
-            db.close()
+            if db:
+                db.close()
 
     async def disconnect(self):
         """Stop reconnect loop and close connection."""

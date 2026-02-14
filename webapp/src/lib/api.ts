@@ -31,6 +31,12 @@ export const getImageUrl = (filename: string, subfolder: string = "", type: stri
     return url;
 };
 
+export const getThumbnailUrl = (filename: string, subfolder: string = "", maxSize: number = 300) => {
+    let url = `${getApiBaseUrl()}/thumbnail?filename=${filename}&max_size=${maxSize}`;
+    if (subfolder) url += `&subfolder=${subfolder}`;
+    return url;
+};
+
 export interface ComfyStatus {
     status: string;
     comfyui_url: string;
@@ -187,6 +193,8 @@ export const useComfyWebSocket = () => {
 
 export interface GalleryItem {
     id: number;
+    prompt_id?: string;
+    workflow_id: string;
     filename: string;
     subfolder: string;
     prompt_positive: string;
@@ -217,7 +225,7 @@ export const fetchGallery = async (workflowId?: string): Promise<GalleryItem[]> 
         const url = workflowId
             ? `${getGalleryUrl()}?workflow_id=${workflowId}`
             : getGalleryUrl();
-        const res = await fetch(url, { cache: 'no-store' });
+        const res = await fetch(url);
         return await res.json();
     } catch (e) {
         return [];
