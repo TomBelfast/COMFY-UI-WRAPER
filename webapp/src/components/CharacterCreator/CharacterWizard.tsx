@@ -46,14 +46,18 @@ export default function CharacterWizard() {
     // Initialize state from localStorage after mount
     useEffect(() => {
         setIsMounted(true);
-        const savedStep = localStorage.getItem('wizard_step');
-        if (savedStep) setCurrentStep(parseInt(savedStep));
+        try {
+            const savedStep = localStorage.getItem('wizard_step');
+            if (savedStep) setCurrentStep(parseInt(savedStep));
 
-        const savedData = localStorage.getItem('wizard_data');
-        if (savedData) setCharacterData(JSON.parse(savedData));
+            const savedData = localStorage.getItem('wizard_data');
+            if (savedData) setCharacterData(JSON.parse(savedData));
 
-        const savedPrompt = localStorage.getItem('wizard_prompt');
-        if (savedPrompt) setGeneratedPrompt(savedPrompt);
+            const savedPrompt = localStorage.getItem('wizard_prompt');
+            if (savedPrompt) setGeneratedPrompt(savedPrompt);
+        } catch (e) {
+            console.warn("Could not load wizard state from storage", e);
+        }
     }, []);
 
     if (!isMounted) {
@@ -65,14 +69,18 @@ export default function CharacterWizard() {
     const updateData = (key: keyof CharacterState, value: any) => {
         const newData = { ...characterData, [key]: value };
         setCharacterData(newData);
-        localStorage.setItem('wizard_data', JSON.stringify(newData));
+        try {
+            localStorage.setItem('wizard_data', JSON.stringify(newData));
+        } catch (e) { }
     };
 
     const nextStep = () => {
         if (currentStep < STEPS.length - 1) {
             const next = currentStep + 1;
             setCurrentStep(next);
-            localStorage.setItem('wizard_step', next.toString());
+            try {
+                localStorage.setItem('wizard_step', next.toString());
+            } catch (e) { }
         }
     };
 
@@ -80,14 +88,18 @@ export default function CharacterWizard() {
         if (currentStep > 0) {
             const prev = currentStep - 1;
             setCurrentStep(prev);
-            localStorage.setItem('wizard_step', prev.toString());
+            try {
+                localStorage.setItem('wizard_step', prev.toString());
+            } catch (e) { }
         }
     };
 
     const goToStep = (stepIndex: number) => {
         if (stepIndex <= currentStep || (currentStep === 4 && stepIndex === 5)) {
             setCurrentStep(stepIndex);
-            localStorage.setItem('wizard_step', stepIndex.toString());
+            try {
+                localStorage.setItem('wizard_step', stepIndex.toString());
+            } catch (e) { }
         }
     };
 

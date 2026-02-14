@@ -26,9 +26,13 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
     // Initialize state from localStorage after mount
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('wizard_last_generated_prompt');
-            if (saved === prompt) {
-                setHasAutoStarted(true);
+            try {
+                const saved = localStorage.getItem('wizard_last_generated_prompt');
+                if (saved === prompt) {
+                    setHasAutoStarted(true);
+                }
+            } catch (e) {
+                console.warn("Storage access error:", e);
             }
         }
     }, [prompt]);
@@ -41,7 +45,9 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
         logic.setSampler("res_multistep");
 
         // Clear previous selection on entry
-        localStorage.removeItem("wizard_selected_image");
+        try {
+            localStorage.removeItem("wizard_selected_image");
+        } catch (e) { }
     }, []);
 
     // 2. Sync prompt to logic state
@@ -49,7 +55,11 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
         if (prompt && logic.positivePrompt !== prompt) {
             logic.setPositivePrompt(prompt);
             // If the prompt changes externally, reset the auto-start guard
-            setHasAutoStarted(localStorage.getItem('wizard_last_generated_prompt') === prompt);
+            try {
+                setHasAutoStarted(localStorage.getItem('wizard_last_generated_prompt') === prompt);
+            } catch (e) {
+                setHasAutoStarted(false);
+            }
         }
     }, [prompt, logic.positivePrompt]);
 
@@ -64,7 +74,9 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
 
         if (isReady) {
             setHasAutoStarted(true);
-            localStorage.setItem('wizard_last_generated_prompt', prompt);
+            try {
+                localStorage.setItem('wizard_last_generated_prompt', prompt);
+            } catch (e) { }
             const startBatch = async () => {
                 await logic.handleGenerate();
                 await new Promise(r => setTimeout(r, 1000));
@@ -84,23 +96,40 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                 const sorted = gallery.sort((a: any, b: any) => b.id - a.id);
                 const latest = sorted.slice(0, 3);
                 setImages(latest);
-                localStorage.setItem("wizard_session_images", JSON.stringify(latest));
+
+                // CRITICAL: Strip image_data before saving to localStorage to avoid QuotaExceededError (5MB limit)
+                // image_data is bulky base64. getImageUrl will fallback to server URL if missing.
+                const storageItems = latest.map(({ image_data, ...rest }) => rest);
+                try {
+                    localStorage.setItem("wizard_session_images", JSON.stringify(storageItems));
+                } catch (e) {
+                    console.warn("Could not save to localStorage:", e);
+                }
             }
         };
 
         if (logic.galleryRefresh > 0) {
             refresh();
         } else {
-            const saved = localStorage.getItem("wizard_session_images");
-            if (saved) setImages(JSON.parse(saved));
-            else refresh();
+            try {
+                const saved = localStorage.getItem("wizard_session_images");
+                if (saved) setImages(JSON.parse(saved));
+                else refresh();
+            } catch (e) {
+                console.warn("Storage access blocked or error:", e);
+                refresh();
+            }
         }
 
         // Listen for selection from separate window
         const checkSelection = () => {
-            const selection = localStorage.getItem("wizard_selected_image");
-            if (selection) {
-                setSelectedImage(JSON.parse(selection));
+            try {
+                const selection = localStorage.getItem("wizard_selected_image");
+                if (selection) {
+                    setSelectedImage(JSON.parse(selection));
+                }
+            } catch (e) {
+                // Ignore storage errors in polling
             }
         };
 
@@ -118,7 +147,13 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
 
     const handleSelect = (img: GalleryItem) => {
         setSelectedImage(img);
-        localStorage.setItem("wizard_selected_image", JSON.stringify(img));
+        try {
+            // Strip bulky image_data before saving
+            const { image_data, ...rest } = img;
+            localStorage.setItem("wizard_selected_image", JSON.stringify(rest));
+        } catch (e) {
+            console.warn("Could not save selection:", e);
+        }
     };
 
     if (selectedImage) {
@@ -147,7 +182,9 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                     <button
                         onClick={() => {
                             setSelectedImage(null);
-                            localStorage.removeItem("wizard_selected_image");
+                            try {
+                                localStorage.removeItem("wizard_selected_image");
+                            } catch (e) { }
                         }}
                         className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest rounded-2xl border border-white/10 transition-all"
                     >
