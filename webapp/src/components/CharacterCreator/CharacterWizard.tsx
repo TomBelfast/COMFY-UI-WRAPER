@@ -143,8 +143,29 @@ export default function CharacterWizard() {
     const isVisible = currentStep < 5;
     const hasExistingResult = generatedPrompt && generatedPrompt.length > 0;
 
+    const STEP_LABELS = [
+        { title: "CHOOSE", highlight: "GENDER" },
+        { title: "ANALYZE", highlight: "STYLE" },
+        { title: "DEFINE", highlight: "PHYSICS" },
+        { title: "MANUFACTURE", highlight: "HAIR" },
+        { title: "RECONSTRUCT", highlight: "BODY" },
+        { title: "MATRIX", highlight: "RESULT" }
+    ];
+
     return (
-        <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto px-4">
+        <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto px-4">
+            <div className="text-center mb-0">
+                <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white mb-2 leading-none">
+                    Create Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Character</span>
+                </h1>
+                <div className="flex flex-col items-center">
+                    <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent mb-4" />
+                    <h2 className="text-xl font-black italic uppercase tracking-tighter text-white/90 animate-pulse">
+                        {STEP_LABELS[currentStep].title} <span className="text-emerald-500">{STEP_LABELS[currentStep].highlight}</span>
+                    </h2>
+                </div>
+            </div>
+
             <WizardStepper
                 steps={STEPS}
                 currentStep={currentStep}
@@ -155,7 +176,7 @@ export default function CharacterWizard() {
                 {/* Navigation - BACK */}
                 {currentStep > 0 && (
                     <button
-                        className="absolute -left-20 top-1/2 -translate-y-1/2 z-50 p-6 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/20 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group/nav"
+                        className="absolute -left-20 top-1/2 -translate-y-1/2 z-[100] p-6 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/20 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group/nav"
                         onClick={prevStep}
                         title="Back"
                     >
@@ -166,7 +187,7 @@ export default function CharacterWizard() {
                 {/* Navigation - NEXT / GENERATE */}
                 {currentStep < 5 && isVisible && (
                     <button
-                        className={`absolute -right-20 top-1/2 -translate-y-1/2 z-50 p-6 transition-all backdrop-blur-md border group/nav shadow-2xl rounded-full
+                        className={`absolute -right-20 top-1/2 -translate-y-1/2 z-[100] p-6 transition-all backdrop-blur-md border group/nav shadow-2xl rounded-full
                             ${isStepValid()
                                 ? 'bg-emerald-500/10 hover:bg-emerald-500/30 text-emerald-500 border-emerald-500/30'
                                 : 'bg-white/5 text-white/10 border-white/5 cursor-not-allowed opacity-50'}
@@ -195,7 +216,7 @@ export default function CharacterWizard() {
                     <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-[120px] rounded-full -mr-48 -mt-48 animate-pulse pointer-events-none" />
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 blur-[120px] rounded-full -ml-48 -mb-48 animate-pulse pointer-events-none" />
 
-                    <div className="h-full w-full flex flex-col relative z-10 pt-20">
+                    <div className="h-full w-full flex flex-col relative z-10 pt-8">
 
                         {currentStep === 0 && (
                             <StepGender

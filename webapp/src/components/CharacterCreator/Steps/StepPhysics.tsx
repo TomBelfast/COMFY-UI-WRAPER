@@ -39,7 +39,7 @@ export default function StepPhysics({ ethnicity, age, eyeColor, onChange, onNext
                             <button
                                 key={eth.id}
                                 onClick={() => onChange('ethnicity', eth.id)}
-                                className={`group relative h-[220px] rounded-[32px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
+                                className={`group relative h-[260px] rounded-[32px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
                                     ${ethnicity === eth.id
                                         ? 'border-emerald-500 bg-white/10 shadow-[0_0_40px_rgba(16,185,129,0.3)] scale-105'
                                         : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}`}
@@ -111,8 +111,8 @@ export default function StepPhysics({ ethnicity, age, eyeColor, onChange, onNext
                                         <div className="w-3 h-3 bg-black rounded-full absolute" />
                                     </div>
                                 </div>
-                                <div className="absolute bottom-2 left-0 right-0 text-center">
-                                    <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${eyeColor === eye.id ? 'text-emerald-400' : 'text-white/40 group-hover:text-white/60'}`}>
+                                <div className="absolute bottom-0 left-0 right-0 py-6 text-center">
+                                    <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${eyeColor === eye.id ? 'text-emerald-400' : 'text-white/40 group-hover:text-white/60'}`}>
                                         {eye.label}
                                     </span>
                                 </div>

@@ -51,7 +51,7 @@ export default function StepHair({ hairLength, hairType, hairColor, onChange, on
                             <button
                                 key={item.id}
                                 onClick={() => onChange('hairLength', item.id)}
-                                className={`group relative w-40 h-[220px] rounded-[24px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
+                                className={`group relative w-44 h-[260px] rounded-[32px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
                                     ${hairLength === item.id
                                         ? 'border-emerald-500 bg-white/10 shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-105'
                                         : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}`}
@@ -64,7 +64,7 @@ export default function StepHair({ hairLength, hairType, hairColor, onChange, on
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
                                 </div>
-                                <span className={`relative z-10 text-[9px] font-black uppercase tracking-[0.3em] ${hairLength === item.id ? 'text-emerald-400' : 'text-white/80'}`}>
+                                <span className={`relative z-10 text-[10px] font-black uppercase tracking-[0.3em] ${hairLength === item.id ? 'text-emerald-400' : 'text-white/80'}`}>
                                     {item.label}
                                 </span>
                             </button>
@@ -80,7 +80,7 @@ export default function StepHair({ hairLength, hairType, hairColor, onChange, on
                             <button
                                 key={item.id}
                                 onClick={() => onChange('hairType', item.id)}
-                                className={`group relative w-40 h-[220px] rounded-[24px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
+                                className={`group relative w-44 h-[260px] rounded-[32px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
                                     ${hairType === item.id
                                         ? 'border-emerald-500 bg-white/10 shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-105'
                                         : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}`}
@@ -93,7 +93,7 @@ export default function StepHair({ hairLength, hairType, hairColor, onChange, on
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
                                 </div>
-                                <span className={`relative z-10 text-[9px] font-black uppercase tracking-[0.3em] ${hairType === item.id ? 'text-emerald-400' : 'text-white/80'}`}>
+                                <span className={`relative z-10 text-[10px] font-black uppercase tracking-[0.3em] ${hairType === item.id ? 'text-emerald-400' : 'text-white/80'}`}>
                                     {item.label}
                                 </span>
                             </button>

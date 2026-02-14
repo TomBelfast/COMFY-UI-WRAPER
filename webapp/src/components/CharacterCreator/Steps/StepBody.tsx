@@ -50,7 +50,7 @@ export default function StepBody({ gender, bodyType, breastSize, onChange, onNex
                             <button
                                 key={item.id}
                                 onClick={() => onChange('bodyType', item.id)}
-                                className={`group relative h-[320px] rounded-[24px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
+                                className={`group relative h-[400px] rounded-[24px] overflow-hidden transition-all duration-300 border-2 flex flex-col items-center justify-end pb-6
                                     ${bodyType === item.id
                                         ? 'border-emerald-500 bg-white/10 shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-105'
                                         : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}`}
