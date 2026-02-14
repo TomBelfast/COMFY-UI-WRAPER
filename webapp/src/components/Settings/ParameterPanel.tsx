@@ -45,6 +45,7 @@ export default function ParameterPanel({
                         type="range" min="1" max="50" value={steps}
                         onChange={(e) => setSteps(Number(e.target.value))}
                         className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                        suppressHydrationWarning
                     />
                 </div>
 
@@ -58,6 +59,7 @@ export default function ParameterPanel({
                         type="range" min="0" max="20" step="0.1" value={cfg}
                         onChange={(e) => setCfg(Number(e.target.value))}
                         className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                        suppressHydrationWarning
                     />
                 </div>
 
@@ -70,6 +72,7 @@ export default function ParameterPanel({
                         value={sampler}
                         onChange={(e) => setSampler(e.target.value)}
                         className="input-glass w-full text-xs font-mono py-2 cursor-pointer [color-scheme:dark]"
+                        suppressHydrationWarning
                     >
                         {CONSTANT_SAMPLERS.map(s => (
                             <option key={s} value={s} className="bg-[#0a0a0a] text-white">
