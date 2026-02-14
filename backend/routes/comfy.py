@@ -85,6 +85,7 @@ async def generate_image(request: ImageGenerateRequest, db: Session = Depends(ge
             ws_manager.register_metadata(prompt_id, {
                 "prompt_positive": request.positive_prompt,
                 "prompt_negative": request.negative_prompt,
+                "workflow_id": request.workflow_id,
                 "model": request.model or "default",
                 "width": request.width,
                 "height": request.height,

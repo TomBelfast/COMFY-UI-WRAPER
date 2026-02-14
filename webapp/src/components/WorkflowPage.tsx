@@ -16,6 +16,7 @@ interface WorkflowPageProps {
     defaultCfg: number;
     defaultSampler: string;
     gatewayName: string;
+    workflowId: string;
 }
 
 export default function WorkflowPage({
@@ -24,9 +25,10 @@ export default function WorkflowPage({
     defaultSteps,
     defaultCfg,
     defaultSampler,
-    gatewayName
+    gatewayName,
+    workflowId
 }: WorkflowPageProps) {
-    const logic = useGenerationLogic();
+    const logic = useGenerationLogic(workflowId);
 
     useEffect(() => {
         logic.setSelectedModel(defaultModel);
@@ -72,6 +74,7 @@ export default function WorkflowPage({
                         handleGenerate={logic.handleGenerate}
                         isGenerating={logic.isGenerating}
                         progress={logic.progress}
+                        workflowId={workflowId}
                     />
                 </div>
 

@@ -137,6 +137,7 @@ class ComfyWebSocketManager:
                         db_image = GalleryImage(
                             filename=filename,
                             subfolder=subfolder,
+                            workflow_id=metadata.get("workflow_id", "default"),
                             prompt_positive=metadata.get("prompt_positive", ""),
                             prompt_negative=metadata.get("prompt_negative", ""),
                             model=metadata.get("model", ""),

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { clearVram, interrupt_generation } from '@/lib/api';
 import SettingsModal from "./SettingsModal";
 
@@ -13,6 +14,7 @@ interface ComfyStatus {
 }
 
 export default function Header() {
+    const pathname = usePathname();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isClearing, setIsClearing] = useState(false);
     const [isInterrupting, setIsInterrupting] = useState(false);
@@ -154,11 +156,23 @@ export default function Header() {
 
 
 
-                    {/* Navigation Protocols */}
+                    {/* Navigation Protocols (Labs) */}
                     <nav className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5 h-10">
-                        <Link href="/" className="px-4 h-full flex items-center text-label !tracking-widest hover:text-emerald-300 hover:bg-white/5 rounded-lg transition-all !text-emerald-400">Turbo</Link>
-                        <Link href="/flux" className="px-4 h-full flex items-center text-label !tracking-widest hover:text-white hover:bg-white/5 rounded-lg transition-all">Flux</Link>
-                        <Link href="/basic" className="px-4 h-full flex items-center text-label !tracking-widest hover:text-white hover:bg-white/5 rounded-lg transition-all">Basic</Link>
+                        <Link
+                            href="/"
+                            className={`px-4 h-full flex items-center text-label !tracking-widest rounded-lg transition-all ${pathname === "/" ? "!text-emerald-400 bg-white/5 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)]" : "text-white/40 hover:text-white hover:bg-white/5"
+                                }`}
+                        >
+                            Z-Turbo
+                        </Link>
+                        <Link
+                            href="/upscale"
+                            className={`px-4 h-full flex items-center text-label !tracking-widest rounded-lg transition-all ${pathname === "/upscale" ? "!text-emerald-400 bg-white/5 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)]" : "text-white/40 hover:text-white hover:bg-white/5"
+                                }`}
+                        >
+                            Z-Turbo Up
+                        </Link>
+
                         <div className="w-px h-4 bg-white/10 mx-2" />
                         <button
                             className="p-2 h-full rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all flex items-center justify-center"

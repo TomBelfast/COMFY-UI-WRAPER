@@ -56,6 +56,7 @@ export interface GenerationRequest {
     model?: string;
     lora_names?: string[];
     batch_size?: number;
+    workflow_id?: string;
 }
 
 export const fetchHealth = async (): Promise<ComfyStatus> => {
@@ -208,11 +209,15 @@ export interface GalleryItemCreate {
     height: number;
     steps: number;
     cfg: number;
+    workflow_id?: string;
 }
 
-export const fetchGallery = async (): Promise<GalleryItem[]> => {
+export const fetchGallery = async (workflowId?: string): Promise<GalleryItem[]> => {
     try {
-        const res = await fetch(`${getGalleryUrl()}`, { cache: 'no-store' });
+        const url = workflowId
+            ? `${getGalleryUrl()}?workflow_id=${workflowId}`
+            : getGalleryUrl();
+        const res = await fetch(url, { cache: 'no-store' });
         return await res.json();
     } catch (e) {
         return [];

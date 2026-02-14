@@ -15,6 +15,7 @@ class ImageGenerateRequest(BaseModel):
     cfg: float = 1.0
     sampler_name: str = "res_multistep"
     batch_size: int = 1
+    workflow_id: str = "default"
 
 class ImageStatusResponse(BaseModel):
     """Response with generation status."""

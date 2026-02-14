@@ -12,7 +12,7 @@ import {
     useComfyWebSocket
 } from "@/lib/api";
 
-export function useGenerationLogic() {
+export function useGenerationLogic(workflowId: string = "default") {
     const [positivePrompt, setPositivePrompt] = useState("");
     const [negativePrompt, setNegativePrompt] = useState("");
     const [width, setWidth] = useState(1088);
@@ -137,6 +137,7 @@ export function useGenerationLogic() {
                     cfg,
                     sampler_name: sampler,
                     batch_size: batchSize,
+                    workflow_id: workflowId,
                 };
 
                 console.log("🚀 SENDING GENERATION REQUEST:", request);
@@ -253,6 +254,7 @@ export function useGenerationLogic() {
         handleLoadPreset,
         handleLoadGalleryItem,
         handleDeletePreset,
-        handleLoraToggle
+        handleLoraToggle,
+        workflowId
     };
 }

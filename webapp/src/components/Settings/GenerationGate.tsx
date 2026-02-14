@@ -199,11 +199,52 @@ export default function GenerationGate({
 
                 <button
                     id="generate-button"
-                    className={`btn-primary w-full mt-2 py-6 text-lg tracking-[0.3em] font-black ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'animate-pulse-glow hover:scale-[1.01] active:scale-[0.99] transition-all'}`}
                     onClick={handleGenerate}
                     disabled={isGenerating}
+                    className={`w-full py-6 mt-2 relative group overflow-hidden rounded-xl transition-all duration-500 transform-gpu ${isGenerating
+                        ? 'bg-white/5 border border-white/10 cursor-not-allowed scale-[0.98]'
+                        : 'bg-emerald-500 border-2 border-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.3),0_15px_45px_rgba(0,0,0,0.5)] hover:shadow-[0_0_60px_#10b981,0_20px_60px_rgba(0,0,0,0.7)] hover:-translate-y-1 active:translate-y-0.5'
+                        }`}
                 >
-                    {isGenerating ? 'SEQUENCING...' : 'INITIATE GENERATION'}
+                    {/* Inner Gloss / Reflection */}
+                    <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent z-0 pointer-events-none" />
+
+                    {isGenerating ? (
+                        <div className="relative flex items-center justify-center gap-5 z-10">
+                            <div className="relative w-6 h-6">
+                                <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-full" />
+                                <div className="absolute inset-0 border-2 border-t-emerald-500 rounded-full animate-spin" />
+                            </div>
+                            <div className="flex flex-col items-start text-left leading-none">
+                                <span className="text-[14px] uppercase tracking-[0.4em] font-black text-emerald-400 animate-pulse">Sequencing Node</span>
+                                <span className="text-[8px] uppercase tracking-[0.2em] text-white/40 font-mono mt-1.5 ml-0.5">Neural Pattern Integration</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Luxury Shine Sweep */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out z-0" />
+
+                            {/* Neon Glow under text */}
+                            <div className="absolute inset-0 bg-emerald-400 opacity-0 group-hover:opacity-30 blur-[40px] transition-opacity duration-300 z-0" />
+
+                            <div className="relative flex items-center justify-center gap-4 z-10">
+                                <div className="p-1.5 px-2 bg-black/30 rounded-lg border border-black/10 transition-transform group-hover:scale-110 shadow-inner">
+                                    <svg className="w-5 h-5 text-black group-hover:text-white transition-colors duration-300" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="flex flex-col items-start text-left leading-none">
+                                    <span className="text-[14px] uppercase tracking-[0.5em] font-black text-black group-hover:text-white transition-colors duration-300">
+                                        Initiate Generation
+                                    </span>
+                                    <span className="text-[8px] uppercase tracking-[0.3em] text-black/50 group-hover:text-white/40 font-mono mt-1.5 ml-0.5">
+                                        Execute Primary Neural Sequence
+                                    </span>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </button>
 
                 {isGenerating && (

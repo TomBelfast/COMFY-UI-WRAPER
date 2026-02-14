@@ -39,6 +39,7 @@ class GalleryImage(Base):
     """Store generated images history."""
     __tablename__ = "gallery"
     id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(String, default="default", index=True) # For isolating galleries
     filename = Column(String)
     subfolder = Column(String, default="")
     prompt_positive = Column(Text)

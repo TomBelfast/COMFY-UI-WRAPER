@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api/gallery", tags=["gallery"])
 class GalleryItemCreate(BaseModel):
     filename: str
     subfolder: str = ""
+    workflow_id: str = "default"
     prompt_positive: str
     prompt_negative: str = ""
     model: str
@@ -29,9 +30,12 @@ class GalleryItemResponse(GalleryItemCreate):
         orm_mode = True
 
 @router.get("", response_model=List[GalleryItemResponse])
-def get_gallery(limit: int = 50, db: Session = Depends(get_db)):
-    """Get gallery images, newest first."""
-    return db.query(GalleryImage).order_by(desc(GalleryImage.created_at)).limit(limit).all()
+def get_gallery(workflow_id: str = "default", limit: int = 50, db: Session = Depends(get_db)):
+    """Get gallery images for a specific workflow, newest first."""
+    query = db.query(GalleryImage)
+    if workflow_id != "all":
+        query = query.filter(GalleryImage.workflow_id == workflow_id)
+    return query.order_by(desc(GalleryImage.created_at)).limit(limit).all()
 
 @router.post("", response_model=GalleryItemResponse)
 def add_to_gallery(item: GalleryItemCreate, db: Session = Depends(get_db)):
@@ -39,6 +43,7 @@ def add_to_gallery(item: GalleryItemCreate, db: Session = Depends(get_db)):
     db_item = GalleryImage(
         filename=item.filename,
         subfolder=item.subfolder,
+        workflow_id=item.workflow_id,
         prompt_positive=item.prompt_positive,
         prompt_negative=item.prompt_negative,
         model=item.model,

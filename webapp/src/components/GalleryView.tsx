@@ -12,6 +12,7 @@ interface GalleryViewProps {
     handleGenerate: () => void;
     isGenerating: boolean;
     progress?: { value: number; max: number };
+    workflowId?: string;
 }
 
 export default function GalleryView({
@@ -23,7 +24,8 @@ export default function GalleryView({
     setNegativePrompt,
     handleGenerate,
     isGenerating,
-    progress = { value: 0, max: 1 }
+    progress = { value: 0, max: 1 },
+    workflowId = "default"
 }: GalleryViewProps) {
     const [images, setImages] = useState<GalleryItem[]>([]);
     const [loading, setLoading] = useState(false);
@@ -51,7 +53,7 @@ export default function GalleryView({
     const loadGallery = async () => {
         setLoading(true);
         try {
-            const data = await fetchGallery();
+            const data = await fetchGallery(workflowId);
             // Sort by newest first
             const sorted = data.sort((a: GalleryItem, b: GalleryItem) => b.id - a.id);
             setImages(sorted);
