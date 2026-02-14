@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
+from loguru import logger
 
 from database import get_db, User
 from auth import (
@@ -86,10 +87,21 @@ def get_me(user: User = Depends(get_current_user)):
 
 @router.patch("/me", response_model=UserResponse)
 def update_me(update: ProfileUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    logger.info(f"Updating profile for user {user.username}. New comfyui_url: {update.comfyui_url}")
+    
     if update.display_name is not None:
         user.display_name = update.display_name
     if update.comfyui_url is not None:
         user.comfyui_url = update.comfyui_url
-    db.commit()
-    db.refresh(user)
-    return user
+    
+    try:
+        # Use merge to handle cases where user might be attached to a different session
+        merged_user = db.merge(user)
+        db.commit()
+        db.refresh(merged_user)
+        logger.success(f"Profile updated for {merged_user.username}. URL in DB: {merged_user.comfyui_url}")
+        return merged_user
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to update profile: {e}")
+        raise HTTPException(status_code=500, detail=f"Database update failed: {str(e)}")

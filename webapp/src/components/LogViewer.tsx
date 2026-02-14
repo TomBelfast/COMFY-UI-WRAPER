@@ -70,7 +70,7 @@ const LogViewer: React.FC = () => {
         return (
             <button
                 onClick={() => setIsVisible(true)}
-                className="fixed bottom-4 right-4 btn-glass py-2 px-4 text-xs z-50"
+                className="fixed bottom-4 left-4 btn-glass py-2 px-4 text-xs z-50"
             >
                 SHOW SYSTEM LOGS
             </button>

@@ -1,10 +1,30 @@
 import asyncio
 import json
 import base64
+from urllib.parse import urlparse
 from loguru import logger
 import websockets
+import httpx
 from typing import Dict, Set, Optional, Any, Callable
 from database import SessionLocal, GalleryImage
+
+TAILSCALE_HTTP_PROXY = "http://localhost:1056"
+
+
+def _is_tailscale_url(url: str) -> bool:
+    """Check if URL points to a Tailscale address (100.x.x.x)."""
+    try:
+        host = urlparse(url).hostname or ""
+        return host.startswith("100.")
+    except Exception:
+        return False
+
+
+def _get_http_client(url: str, timeout: float = 20.0) -> httpx.AsyncClient:
+    """Create httpx client, using Tailscale HTTP proxy for 100.x.x.x addresses."""
+    if _is_tailscale_url(url):
+        return httpx.AsyncClient(timeout=timeout, proxy=TAILSCALE_HTTP_PROXY)
+    return httpx.AsyncClient(timeout=timeout, trust_env=False)
 
 class ComfyWebSocketManager:
     def __init__(self, comfy_url: str):
@@ -150,7 +170,7 @@ class ComfyWebSocketManager:
                             from PIL import Image
                             import io
                             view_url = f"{self.base_url}/view?filename={filename}&subfolder={subfolder}&type=output"
-                            async with httpx.AsyncClient(timeout=20.0, trust_env=False) as http_client:
+                            async with _get_http_client(view_url) as http_client:
                                 resp = await http_client.get(view_url)
                                 if resp.status_code == 200:
                                     # Base64 for persistence

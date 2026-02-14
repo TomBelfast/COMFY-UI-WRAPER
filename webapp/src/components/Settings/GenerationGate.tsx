@@ -280,7 +280,7 @@ export default function GenerationGate({
                                 </div>
                             </div>
                             <div className="mt-2 text-[8px] font-mono text-emerald-500/50 uppercase tracking-tighter overflow-hidden whitespace-nowrap">
-                                {`>>> PROCESSING NEURAL TENSORS | SEED_OP:${Math.round(Math.random() * 999999)} | STREAM_ACTIVE | BUFFER_SYNC...`.repeat(2)}
+                                {">>> PROCESSING NEURAL TENSORS | SEED_OP:842109 | STREAM_ACTIVE | BUFFER_SYNC... >>> PROCESSING NEURAL TENSORS | SEED_OP:842109 | STREAM_ACTIVE | BUFFER_SYNC..."}
                             </div>
                         </div>
                     </div>

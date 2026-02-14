@@ -25,6 +25,8 @@ const CONSTANT_SAMPLERS = [
     "uni_pc"
 ];
 
+import ModelDownloadModal from "@/components/ModelDownloadModal";
+
 export default function ParameterPanel({
     steps, setSteps,
     cfg, setCfg,
@@ -95,12 +97,17 @@ export default function ParameterPanel({
                     </select>
                 </div>
 
-                <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-label !tracking-normal mb-1">Checkpoint Module</span>
-                        <span className="text-[10px] text-emerald-400 font-mono break-all leading-relaxed">
-                            {selectedModel}
-                        </span>
+                <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 relative group">
+                    <div className="flex justify-between items-start">
+                        <div className="flex flex-col gap-1 pr-8">
+                            <span className="text-label !tracking-normal mb-1">Checkpoint Module</span>
+                            <span className="text-[10px] text-emerald-400 font-mono break-all leading-relaxed">
+                                {selectedModel}
+                            </span>
+                        </div>
+                        <div className="absolute top-2 right-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                            <ModelDownloadModal />
+                        </div>
                     </div>
                 </div>
             </div>

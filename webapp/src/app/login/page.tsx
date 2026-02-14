@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 
@@ -15,10 +15,11 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
 
     // If already logged in, redirect
-    if (user) {
-        router.replace("/");
-        return null;
-    }
+    useEffect(() => {
+        if (user) {
+            router.replace("/");
+        }
+    }, [user, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -103,11 +104,10 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-widest transition-all ${
-                            loading
-                                ? "bg-emerald-500/20 text-emerald-500/50 cursor-not-allowed"
-                                : "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 hover:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-                        }`}
+                        className={`w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-widest transition-all ${loading
+                            ? "bg-emerald-500/20 text-emerald-500/50 cursor-not-allowed"
+                            : "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 hover:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                            }`}
                     >
                         {loading ? (
                             <span className="flex items-center justify-center gap-2">

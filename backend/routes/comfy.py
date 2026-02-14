@@ -14,12 +14,31 @@ from database import get_db, AppConfig, User
 from schemas.comfy_schemas import ImageGenerateRequest, ImageStatusResponse
 from services.workflow_service import build_comfy_workflow
 from services.websocket_manager import get_manager
-from auth import get_current_user
+from auth import get_current_user, get_current_user_ws
 
 router = APIRouter(prefix="/api/comfy", tags=["comfy"])
 
 # Configuration
 DEFAULT_COMFYUI_URL = "http://192.168.0.14:8188"
+TAILSCALE_HTTP_PROXY = "http://localhost:1056"  # Tailscale userspace HTTP proxy
+
+
+def _is_tailscale_url(url: str) -> bool:
+    """Check if URL points to a Tailscale address (100.x.x.x)."""
+    try:
+        from urllib.parse import urlparse
+        host = urlparse(url).hostname or ""
+        return host.startswith("100.")
+    except Exception:
+        return False
+
+
+def get_comfy_client(url: str, timeout: float = 30.0) -> httpx.AsyncClient:
+    """Create httpx client, using Tailscale HTTP proxy for 100.x.x.x addresses."""
+    if _is_tailscale_url(url):
+        logger.debug(f"Using Tailscale HTTP proxy for {url}")
+        return httpx.AsyncClient(timeout=timeout, proxy=TAILSCALE_HTTP_PROXY)
+    return httpx.AsyncClient(timeout=timeout, trust_env=False)
 
 def get_comfy_url(db: Session, user: User = None) -> str:
     """Get ComfyUI URL: per-user → per-user config → global config → default."""
@@ -42,7 +61,7 @@ async def health_check(db: Session = Depends(get_db), user: User = Depends(get_c
     """Check health of backend and ComfyUI connection."""
     url = get_comfy_url(db, user)
     try:
-        async with httpx.AsyncClient(timeout=5.0, trust_env=False) as client:
+        async with get_comfy_client(url, timeout=5.0) as client:
             resp = await client.get(f"{url}/system_stats")
             comfy_status = "connected" if resp.status_code == 200 else "error"
     except Exception as e:
@@ -59,7 +78,7 @@ async def health_check(db: Session = Depends(get_db), user: User = Depends(get_c
 async def get_queue(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Get ComfyUI queue status."""
     url = get_comfy_url(db, user)
-    async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
+    async with get_comfy_client(url, timeout=10.0) as client:
         resp = await client.get(f"{url}/queue")
         return resp.json()
 
@@ -83,7 +102,7 @@ async def generate_image(request: ImageGenerateRequest, db: Session = Depends(ge
         
         logger.info(f"GENERATE: Sending request to ComfyUI at {url}/prompt (client_id: {client_id})")
         
-        async with httpx.AsyncClient(timeout=120.0, trust_env=False) as client:
+        async with get_comfy_client(url, timeout=120.0) as client:
             response = await client.post(
                 f"{url}/prompt",
                 json={"prompt": workflow, "client_id": client_id}
@@ -135,7 +154,7 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db), user: User
     logger.debug(f"STATUS: Checking status for {prompt_id}")
     url = get_comfy_url(db, user)
     try:
-        async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
+        async with get_comfy_client(url, timeout=30.0) as client:
             # Check queue
             logger.debug(f"STATUS: Fetching queue from {url}/queue")
             queue_response = await client.get(f"{url}/queue")
@@ -252,7 +271,7 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db), user: User
 async def get_image(filename: str, subfolder: str = "", type: str = "output", db: Session = Depends(get_db)):
     """Retrieve an image from ComfyUI (public - used by <img src>)."""
     url = get_comfy_url(db)
-    async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
+    async with get_comfy_client(url, timeout=30.0) as client:
         resp = await client.get(f"{url}/view?filename={filename}&subfolder={subfolder}&type={type}")
         return Response(content=resp.content, media_type=resp.headers.get("content-type"))
 
@@ -260,7 +279,7 @@ async def get_image(filename: str, subfolder: str = "", type: str = "output", db
 async def get_thumbnail(filename: str, subfolder: str = "", max_size: int = 300, db: Session = Depends(get_db)):
     """Retrieve a thumbnail from ComfyUI (public - used by <img src>)."""
     url = get_comfy_url(db)
-    async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
+    async with get_comfy_client(url, timeout=30.0) as client:
         resp = await client.get(f"{url}/view?filename={filename}&subfolder={subfolder}&type=output")
         if resp.status_code != 200:
             raise HTTPException(status_code=resp.status_code, detail="Image not found")
@@ -275,7 +294,7 @@ async def get_thumbnail(filename: str, subfolder: str = "", max_size: int = 300,
 async def interrupt(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Interrupt current generation."""
     url = get_comfy_url(db, user)
-    async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
+    async with get_comfy_client(url, timeout=10.0) as client:
         resp = await client.post(f"{url}/interrupt")
         return resp.json()
 
@@ -283,7 +302,7 @@ async def interrupt(db: Session = Depends(get_db), user: User = Depends(get_curr
 async def clear_vram(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Clear ComfyUI VRAM (unload models)."""
     url = get_comfy_url(db, user)
-    async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
+    async with get_comfy_client(url, timeout=10.0) as client:
         # ComfyUI doesn't have a direct clear-vram endpoint usually, 
         # but some custom nodes do or we can trigger it via GC.
         # This is a placeholder for common practice.
@@ -291,19 +310,19 @@ async def clear_vram(db: Session = Depends(get_db), user: User = Depends(get_cur
         return resp.json()
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: Optional[str] = Query(None)):
     """Bridge for ComfyUI WebSocket updates."""
     await websocket.accept()
-    url = "http://192.168.0.14:8188" # Fallback/Default
     
-    # Try to get actual URL from DB (this is tricky in WS init but let's try)
+    db = next(get_db())
     try:
-        db = next(get_db())
-        config = db.query(AppConfig).filter(AppConfig.key == "comfyui_url").first()
-        if config: url = config.value
+        user = await get_current_user_ws(token, db)
+        url = get_comfy_url(db, user)
+    except Exception as e:
+        logger.error(f"WS Auth Error: {e}")
+        url = DEFAULT_COMFYUI_URL
+    finally:
         db.close()
-    except:
-        pass
 
     manager = get_manager(url)
     

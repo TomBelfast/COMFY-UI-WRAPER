@@ -128,6 +128,10 @@ export const updateProfile = async (data: { display_name?: string; comfyui_url?:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Update failed' }));
+        throw new Error(err.detail || 'Update failed');
+    }
     return res.json();
 };
 
