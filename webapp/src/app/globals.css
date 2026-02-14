@@ -6,25 +6,25 @@
    ============================================ */
 
 :root {
-  /* Core Colors */
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #121212;
-  --bg-tertiary: #1a1a1a;
+  /* Core Colors - Brightened */
+  --bg-primary: #121212;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #222222;
 
   /* Emerald Gradient */
-  --emerald-light: #6ee7b7;
+  --emerald-light: #a7f3d0;
   --emerald-mid: #10b981;
-  --emerald-dark: #065f46;
+  --emerald-dark: #059669;
 
-  /* Text */
+  /* Text - Increased readability */
   --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.65);
 
-  /* Glass */
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover-border: rgba(110, 231, 183, 0.3);
+  /* Glass - More visible */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-hover-border: rgba(110, 231, 183, 0.5);
 
   /* Shadows */
   --shadow-glow: 0 0 40px rgba(16, 185, 129, 0.15);

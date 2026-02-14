@@ -138,11 +138,29 @@ export default function GenerationGate({
                         />
                     </div>
                     <div>
-                        <label className="text-label block mb-2">Resolution</label>
-                        <div className="flex gap-2">
-                            <button onClick={() => { setWidth(1088); setHeight(1920); }} className={`flex-1 py-2 rounded-lg border text-[10px] font-bold ${width === 1088 ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/5'}`}>9:16</button>
-                            <button onClick={() => { setWidth(1280); setHeight(1280); }} className={`flex-1 py-2 rounded-lg border text-[10px] font-bold ${width === 1280 ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/5'}`}>1:1</button>
-                            <button onClick={() => { setWidth(1920); setHeight(1088); }} className={`flex-1 py-2 rounded-lg border text-[10px] font-bold ${width === 1920 ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/5'}`}>16:9</button>
+                        <label className="text-label block mb-2">Aspect Ratio</label>
+                        <div className="flex gap-1">
+                            <button
+                                onClick={() => { setWidth(1088); setHeight(1920); }}
+                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1088 ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'}`}
+                            >
+                                <div className={`w-3.5 h-6 rounded-[1px] border-2 transition-all ${width === 1088 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/30'}`} />
+                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1088 ? 'opacity-100' : 'opacity-60'}`}>9:16</span>
+                            </button>
+                            <button
+                                onClick={() => { setWidth(1280); setHeight(1280); }}
+                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1280 ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'}`}
+                            >
+                                <div className={`w-5 h-5 rounded-[1px] border-2 transition-all ${width === 1280 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/30'}`} />
+                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1280 ? 'opacity-100' : 'opacity-60'}`}>1:1</span>
+                            </button>
+                            <button
+                                onClick={() => { setWidth(1920); setHeight(1088); }}
+                                className={`flex-1 flex flex-col items-center gap-2 py-2 transition-all group ${width === 1920 ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'}`}
+                            >
+                                <div className={`w-6 h-3.5 mt-1 rounded-[1px] border-2 transition-all ${width === 1920 ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-emerald-500/30' : 'border-white/30'}`} />
+                                <span className={`text-[10px] font-black tracking-[0.2em] transition-all ${width === 1920 ? 'opacity-100' : 'opacity-60'}`}>16:9</span>
+                            </button>
                         </div>
                     </div>
                 </div>
