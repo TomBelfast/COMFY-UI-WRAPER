@@ -174,6 +174,13 @@ export default function Header() {
                         >
                             Z-Turbo Up
                         </Link>
+                        <Link
+                            href="/character"
+                            className={`px-4 h-full flex items-center text-label !tracking-widest rounded-lg transition-all ${pathname === "/character" ? "!text-emerald-400 bg-white/5 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)]" : "text-white/40 hover:text-white hover:bg-white/5"
+                                }`}
+                        >
+                            Character
+                        </Link>
 
                         <div className="w-px h-4 bg-white/10 mx-2" />
                         <button

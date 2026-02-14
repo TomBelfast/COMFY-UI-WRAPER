@@ -73,6 +73,25 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+  padding-right: 0.3em !important;
+  /* Larger buffer for italic slant */
+  overflow: visible !important;
+}
+
+/* Global fix for italic clipping across all utility classes */
+.italic,
+[class*="italic"] {
+  padding-right: 0.4em !important;
+  overflow: visible !important;
+  display: inline-block;
+}
+
+/* Force space for last characters in nested spans within italics */
+.italic span:last-child,
+[class*="italic"] span:last-child {
+  padding-right: 0.4em !important;
+  display: inline-block;
+  overflow: visible !important;
 }
 
 /* System Labels - Default Brightness increased */

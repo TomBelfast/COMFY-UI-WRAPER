@@ -12,6 +12,7 @@ export default function FluxPage() {
             defaultCfg={3.5}
             defaultSampler="euler"
             gatewayName="High-Fidelity Node"
+            workflowId="flux-realism"
         />
     );
 }

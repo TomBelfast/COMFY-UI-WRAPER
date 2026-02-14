@@ -12,6 +12,7 @@ export default function BasicPage() {
             defaultCfg={8.0}
             defaultSampler="euler"
             gatewayName="Legacy Node (SD 1.5)"
+            workflowId="basic-txt2img"
         />
     );
 }
