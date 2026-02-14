@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clearVram, interrupt_generation } from '@/lib/api';
 import SettingsModal from "./SettingsModal";
+import { useAuth } from "./AuthProvider";
 
 interface ComfyStatus {
     status: "connected" | "disconnected" | "checking";
@@ -15,6 +16,7 @@ interface ComfyStatus {
 
 export default function Header() {
     const pathname = usePathname();
+    const { user, logout } = useAuth();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isClearing, setIsClearing] = useState(false);
     const [isInterrupting, setIsInterrupting] = useState(false);
@@ -157,6 +159,31 @@ export default function Header() {
                     )}
 
 
+
+                    {/* User Info + Logout */}
+                    {user && (
+                        <div className="flex items-center gap-3 px-4 h-10 rounded-xl bg-white/5 border border-white/10">
+                            {user.profile_pic ? (
+                                <img src={user.profile_pic} alt="" className="w-6 h-6 rounded-full" />
+                            ) : (
+                                <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                                    <span className="text-[10px] font-bold text-emerald-400">
+                                        {(user.display_name || user.username || "?")[0].toUpperCase()}
+                                    </span>
+                                </div>
+                            )}
+                            <span className="text-xs text-white/70 font-medium">{user.display_name || user.username}</span>
+                            <button
+                                onClick={logout}
+                                className="ml-1 p-1 rounded hover:bg-white/10 text-white/30 hover:text-red-400 transition-colors"
+                                title="Logout"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
 
                     {/* Navigation Protocols (Labs) */}
                     <nav className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5 h-10">

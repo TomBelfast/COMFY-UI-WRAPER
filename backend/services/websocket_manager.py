@@ -165,7 +165,8 @@ class ComfyWebSocketManager:
                             width=actual_width,
                             height=actual_height,
                             steps=metadata.get("steps", 20),
-                            cfg=metadata.get("cfg", 1.0)
+                            cfg=metadata.get("cfg", 1.0),
+                            user_id=metadata.get("user_id"),
                         )
                         db.add(db_image)
                         saved_count += 1

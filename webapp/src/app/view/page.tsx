@@ -3,6 +3,8 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getImageUrl, GalleryItem } from "@/lib/api";
+import { downloadImage } from "@/lib/utils";
+import { Download, Maximize, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 function ViewContent() {
     const searchParams = useSearchParams();
@@ -28,6 +30,29 @@ function ViewContent() {
         setIsZoomed(false);
     }, [index]);
 
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (images.length === 0) return;
+            if (e.key === "ArrowLeft") setIndex(prev => prev > 0 ? prev - 1 : images.length - 1);
+            if (e.key === "ArrowRight") setIndex(prev => (prev + 1) % images.length);
+            if (e.key === "Escape") window.close();
+            if (e.key === "f" || e.key === "F") toggleFullscreen();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [images.length]);
+
     if (images.length === 0) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center font-mono text-emerald-500/50 uppercase tracking-[0.5em]">
@@ -40,35 +65,53 @@ function ViewContent() {
 
     return (
         <div className="fixed inset-0 bg-black flex flex-col items-center justify-center overflow-hidden font-sans">
-            {/* Close Page Action */}
-            <button
-                className="absolute top-6 right-6 z-[60] p-4 bg-white/5 hover:bg-red-500/20 rounded-full text-white/20 hover:text-red-400 transition-all backdrop-blur-md border border-white/5 group"
-                onClick={() => window.close()}
-                title="Close Stream"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-90 transition-transform duration-300">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
+            {/* Top Toolbar */}
+            <div className="absolute top-6 right-6 z-[60] flex gap-3">
+                <button
+                    id="action-download"
+                    className="p-4 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/40 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group shadow-xl"
+                    onClick={() => downloadImage(getImageUrl(current.filename, current.subfolder), `character-${current.id}.png`)}
+                    title="Download Frame"
+                >
+                    <Download size={24} className="group-hover:scale-110 transition-transform" />
+                </button>
+                <button
+                    id="action-fullscreen"
+                    className="p-4 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/40 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group shadow-xl"
+                    onClick={toggleFullscreen}
+                    title="Toggle Browser Fullscreen"
+                >
+                    <Maximize size={24} className="group-hover:scale-110 transition-transform" />
+                </button>
+                <button
+                    id="action-close"
+                    className="p-4 bg-white/5 hover:bg-red-500/20 rounded-full text-white/40 hover:text-red-400 transition-all backdrop-blur-md border border-white/5 group shadow-xl"
+                    onClick={() => window.close()}
+                    title="Close Matrix Stream"
+                >
+                    <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                </button>
+            </div>
 
             {/* Navigation - PREV */}
             {!isZoomed && (
                 <button
+                    id="nav-prev"
                     className="absolute left-[10%] md:left-[20%] lg:left-[28%] z-50 p-8 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/40 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group shadow-2xl"
                     onClick={() => setIndex(prev => prev > 0 ? prev - 1 : images.length - 1)}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <ChevronLeft size={64} className="group-hover:scale-110 transition-transform" />
                 </button>
             )}
 
             {/* Navigation - NEXT */}
             {!isZoomed && (
                 <button
+                    id="nav-next"
                     className="absolute right-[10%] md:right-[20%] lg:right-[28%] z-50 p-8 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/40 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group shadow-2xl"
                     onClick={() => setIndex(prev => (prev + 1) % images.length)}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <ChevronRight size={64} className="group-hover:scale-110 transition-transform" />
                 </button>
             )}
 
@@ -82,6 +125,7 @@ function ViewContent() {
                     <div className={`absolute inset-0 bg-emerald-500/5 blur-[120px] rounded-full scale-90 animate-pulse pointer-events-none transition-opacity duration-500 ${isZoomed ? 'opacity-0' : 'opacity-100'}`} />
 
                     <img
+                        id={`view-image-${current.id}`}
                         key={current.id}
                         src={getImageUrl(current.filename, current.subfolder)}
                         alt="Cinematic Matrix View"
@@ -95,6 +139,7 @@ function ViewContent() {
             {!isZoomed && (
                 <div className="absolute bottom-10 flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                     <button
+                        id="btn-confirm-selection"
                         className="px-12 py-4 bg-emerald-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.6)] hover:bg-emerald-400 transition-all active:scale-95 group relative overflow-hidden"
                         onClick={() => {
                             localStorage.setItem("wizard_selected_image", JSON.stringify(current));

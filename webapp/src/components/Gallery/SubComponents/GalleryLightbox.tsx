@@ -3,6 +3,8 @@
 
 import { useEffect } from "react";
 import { GalleryItem, getImageUrl, getThumbnailUrl } from "@/lib/api";
+import { downloadImage } from "@/lib/utils";
+import { Download } from "lucide-react";
 
 interface GalleryLightboxProps {
     item: GalleryItem;
@@ -111,13 +113,23 @@ export default function GalleryLightbox({
             >
                 <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/20">
                     <h3 className="text-sm font-bold text-white tracking-[0.2em] uppercase">METADATA</h3>
-                    <button
-                        id="lightbox-copy-btn"
-                        onClick={onCopy}
-                        className={`text-[10px] px-3 py-1 rounded-full uppercase tracking-wider border transition-all ${copied ? 'bg-emerald-500 text-black border-emerald-500 font-bold shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'border-white/20 text-white/60 hover:border-white/50 hover:text-white'}`}
-                    >
-                        {copied ? 'COPIED' : 'COPY'}
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            id="lightbox-download-action"
+                            onClick={() => downloadImage(getImageUrl(item.filename, item.subfolder), `creation-${item.id}.png`)}
+                            className="p-1.5 border border-white/20 text-white/60 hover:border-emerald-500/50 hover:text-emerald-400 rounded-md transition-all"
+                            title="Download Creation"
+                        >
+                            <Download size={14} />
+                        </button>
+                        <button
+                            id="lightbox-copy-btn"
+                            onClick={onCopy}
+                            className={`text-[10px] px-3 py-1 rounded-full uppercase tracking-wider border transition-all ${copied ? 'bg-emerald-500 text-black border-emerald-500 font-bold shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'border-white/20 text-white/60 hover:border-white/50 hover:text-white'}`}
+                        >
+                            {copied ? 'COPIED' : 'COPY'}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-5 space-y-8 custom-scrollbar">

@@ -1,8 +1,8 @@
 
-from sqlalchemy import create_engine, Column, Integer, String, Text, Float, JSON, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, Float, JSON, DateTime, Boolean, ForeignKey
 from datetime import datetime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 
 import os
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,17 +15,32 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+class User(Base):
+    """User accounts for multi-user auth."""
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    display_name = Column(String, nullable=True)
+    password_hash = Column(String, nullable=True)  # NULL for Tailscale-only users
+    profile_pic = Column(String, nullable=True)
+    tailscale_login = Column(String, unique=True, nullable=True, index=True)
+    comfyui_url = Column(String, nullable=True)  # Per-user ComfyUI URL
+    is_admin = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class AppConfig(Base):
     """Store key-value settings like API keys."""
     __tablename__ = "config"
     key = Column(String, primary_key=True, index=True)
     value = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
 class GenerationPreset(Base):
     """Store generation presets."""
     __tablename__ = "presets"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     prompt_positive = Column(Text)
     prompt_negative = Column(Text)
     model = Column(String)
@@ -40,6 +55,7 @@ class GalleryImage(Base):
     __tablename__ = "gallery"
     id = Column(Integer, primary_key=True, index=True)
     prompt_id = Column(String, index=True) # Unique ID for the gneration batch
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     workflow_id = Column(String, default="default", index=True) # For isolating galleries
     filename = Column(String)
     subfolder = Column(String, default="")

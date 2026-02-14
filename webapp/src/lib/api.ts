@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 const getBaseUrl = () => {
     if (typeof window !== 'undefined') {
         const url = new URL(window.location.href);
-        // In local dev, we might need the direct backend URL if proxy isn't used
-        // but relative path is best for production behind reverse proxy
         return '';
     }
     return process.env.BACKEND_URL || 'http://localhost:8000';
@@ -15,15 +13,108 @@ export const getBackendUrl = getBaseUrl;
 
 const getApiBaseUrl = () => `${getBaseUrl()}/api/comfy`;
 const getStoreUrl = () => `${getBaseUrl()}/api/store`;
+const getAuthUrl = () => `${getBaseUrl()}/api/auth`;
 const getWsUrl = () => {
     if (typeof window !== 'undefined') {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.host;
-        return `${protocol}//${host}/api/comfy/ws`;
+        const token = getToken();
+        const url = `${protocol}//${host}/api/comfy/ws`;
+        return token ? `${url}?token=${token}` : url;
     }
     return 'ws://localhost:8000/api/comfy/ws';
 };
 const getGalleryUrl = () => `${getBaseUrl()}/api/gallery`;
+
+// --- Auth Token Management ---
+
+export const getToken = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('auth_token');
+};
+
+export const setToken = (token: string) => {
+    localStorage.setItem('auth_token', token);
+};
+
+export const clearToken = () => {
+    localStorage.removeItem('auth_token');
+};
+
+const authHeaders = (): Record<string, string> => {
+    const token = getToken();
+    if (token) {
+        return { 'Authorization': `Bearer ${token}` };
+    }
+    return {};
+};
+
+const authFetch = (url: string, options: RequestInit = {}): Promise<Response> => {
+    const headers = {
+        ...authHeaders(),
+        ...(options.headers || {}),
+    };
+    return fetch(url, { ...options, headers });
+};
+
+// --- Auth API ---
+
+export interface AuthUser {
+    id: number;
+    username: string;
+    display_name: string | null;
+    profile_pic: string | null;
+    tailscale_login: string | null;
+    comfyui_url: string | null;
+    is_admin: boolean;
+}
+
+export const login = async (username: string, password: string): Promise<{ token: string; user: AuthUser }> => {
+    const res = await fetch(`${getAuthUrl()}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Login failed' }));
+        throw new Error(err.detail || 'Login failed');
+    }
+    return res.json();
+};
+
+export const register = async (username: string, password: string, display_name?: string): Promise<{ token: string; user: AuthUser }> => {
+    const res = await fetch(`${getAuthUrl()}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, display_name }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Registration failed' }));
+        throw new Error(err.detail || 'Registration failed');
+    }
+    return res.json();
+};
+
+export const fetchMe = async (): Promise<AuthUser | null> => {
+    try {
+        const res = await authFetch(`${getAuthUrl()}/me`);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+};
+
+export const updateProfile = async (data: { display_name?: string; comfyui_url?: string }): Promise<AuthUser> => {
+    const res = await authFetch(`${getAuthUrl()}/me`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    return res.json();
+};
+
+// --- Existing API (now with auth) ---
 
 export const getImageUrl = (filename: string, subfolder: string = "", type: string = "output") => {
     let url = `${getApiBaseUrl()}/image?filename=${filename}&type=${type}`;
@@ -67,7 +158,7 @@ export interface GenerationRequest {
 
 export const fetchHealth = async (): Promise<ComfyStatus> => {
     try {
-        const res = await fetch(`${getApiBaseUrl()}/health`);
+        const res = await authFetch(`${getApiBaseUrl()}/health`);
         return await res.json();
     } catch (e) {
         return { status: 'disconnected', comfyui_url: '', devices: [] };
@@ -75,19 +166,19 @@ export const fetchHealth = async (): Promise<ComfyStatus> => {
 };
 
 export const fetchModels = async (): Promise<string[]> => {
-    const res = await fetch(`${getApiBaseUrl()}/models`);
+    const res = await authFetch(`${getApiBaseUrl()}/models`);
     const data: ModelList = await res.json();
     return data.models || [];
 };
 
 export const fetchLoras = async (): Promise<string[]> => {
-    const res = await fetch(`${getApiBaseUrl()}/loras`);
+    const res = await authFetch(`${getApiBaseUrl()}/loras`);
     const data: LoraList = await res.json();
     return data.loras || [];
 };
 
 export const generateImage = async (req: GenerationRequest) => {
-    const res = await fetch(`${getApiBaseUrl()}/generate`, {
+    const res = await authFetch(`${getApiBaseUrl()}/generate`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -112,7 +203,7 @@ export interface GenerationPreset {
 
 export const fetchConfig = async (key: string): Promise<string | null> => {
     try {
-        const res = await fetch(`${getStoreUrl()}/config/${key}`);
+        const res = await authFetch(`${getStoreUrl()}/config/${key}`);
         if (!res.ok) return null;
         const data = await res.json();
         return data.value;
@@ -122,7 +213,7 @@ export const fetchConfig = async (key: string): Promise<string | null> => {
 };
 
 export const saveConfig = async (key: string, value: string) => {
-    await fetch(`${getStoreUrl()}/config`, {
+    await authFetch(`${getStoreUrl()}/config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value }),
@@ -131,7 +222,7 @@ export const saveConfig = async (key: string, value: string) => {
 
 export const fetchPresets = async (): Promise<GenerationPreset[]> => {
     try {
-        const res = await fetch(`${getStoreUrl()}/presets`);
+        const res = await authFetch(`${getStoreUrl()}/presets`);
         return await res.json();
     } catch (e) {
         return [];
@@ -139,7 +230,7 @@ export const fetchPresets = async (): Promise<GenerationPreset[]> => {
 };
 
 export const savePreset = async (preset: GenerationPreset) => {
-    const res = await fetch(`${getStoreUrl()}/presets`, {
+    const res = await authFetch(`${getStoreUrl()}/presets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(preset),
@@ -149,7 +240,7 @@ export const savePreset = async (preset: GenerationPreset) => {
 };
 
 export const deletePreset = async (name: string) => {
-    await fetch(`${getStoreUrl()}/presets/${name}`, {
+    await authFetch(`${getStoreUrl()}/presets/${name}`, {
         method: 'DELETE',
     });
 };
@@ -225,7 +316,7 @@ export const fetchGallery = async (workflowId?: string): Promise<GalleryItem[]> 
         const url = workflowId
             ? `${getGalleryUrl()}?workflow_id=${workflowId}`
             : getGalleryUrl();
-        const res = await fetch(url);
+        const res = await authFetch(url);
         return await res.json();
     } catch (e) {
         return [];
@@ -233,7 +324,7 @@ export const fetchGallery = async (workflowId?: string): Promise<GalleryItem[]> 
 };
 
 export const saveToGallery = async (item: GalleryItemCreate) => {
-    await fetch(`${getGalleryUrl()}`, {
+    await authFetch(`${getGalleryUrl()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item),
@@ -241,26 +332,26 @@ export const saveToGallery = async (item: GalleryItemCreate) => {
 };
 
 export const deleteFromGallery = async (id: number) => {
-    await fetch(`${getGalleryUrl()}/${id}`, {
+    await authFetch(`${getGalleryUrl()}/${id}`, {
         method: 'DELETE',
     });
 };
 
 export const clearGallery = async () => {
-    await fetch(`${getGalleryUrl()}`, {
+    await authFetch(`${getGalleryUrl()}`, {
         method: 'DELETE',
     });
 };
 
 export const clearVram = async () => {
-    const res = await fetch(`${getApiBaseUrl()}/clear-vram`, {
+    const res = await authFetch(`${getApiBaseUrl()}/clear-vram`, {
         method: 'POST',
     });
     return await res.json();
 };
 
 export const interrupt_generation = async () => {
-    const res = await fetch(`${getApiBaseUrl()}/interrupt`, {
+    const res = await authFetch(`${getApiBaseUrl()}/interrupt`, {
         method: 'POST',
     });
     return await res.json();

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useGenerationLogic } from "@/hooks/useGenerationLogic";
 import { fetchGallery, getImageUrl, GalleryItem } from "@/lib/api";
+import { downloadImage } from "@/lib/utils";
+import { Download, Maximize2 } from "lucide-react";
 
 interface StepResultProps {
     prompt: string;
@@ -179,25 +181,46 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                             <img
                                 src={getImageUrl(img.filename, img.subfolder)}
                                 alt={`Result ${idx + 1}`}
-                                className="w-full h-full object-cover cursor-zoom-in"
+                                className="w-full h-full object-cover cursor-zoom-in group-hover:scale-110 transition-transform duration-700"
                                 onClick={() => openPreview(idx)}
                             />
 
+                            {/* Actions Overlay */}
+                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                <button
+                                    id={`download-${img.id}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        downloadImage(getImageUrl(img.filename, img.subfolder), `character-${img.id}.png`);
+                                    }}
+                                    className="p-2 bg-black/60 hover:bg-emerald-500 rounded-lg text-white hover:text-black transition-all border border-white/10"
+                                    title="Download Image"
+                                >
+                                    <Download size={14} />
+                                </button>
+                                <button
+                                    id={`fullscreen-${img.id}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openPreview(idx);
+                                    }}
+                                    className="p-2 bg-black/60 hover:bg-emerald-500 rounded-lg text-white hover:text-black transition-all border border-white/10"
+                                    title="Full Screen"
+                                >
+                                    <Maximize2 size={14} />
+                                </button>
+                            </div>
+
                             {/* Overlay Info */}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-3 translate-y-2 group-hover:translate-y-0 transition-transform">
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-3 translate-y-2 group-hover:translate-y-0 transition-transform z-10">
                                 <div className="text-[7px] font-mono text-emerald-400 mb-1 opacity-50 uppercase">STREAM_BUFFER #{img.id}</div>
                                 <div className="flex flex-col gap-1.5">
                                     <button
+                                        id={`select-variant-${img.id}`}
                                         onClick={() => handleSelect(img)}
                                         className="w-full py-1.5 bg-emerald-500 text-black text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-400 transition-all"
                                     >
                                         Choose Variant
-                                    </button>
-                                    <button
-                                        onClick={() => openPreview(idx)}
-                                        className="w-full py-1 bg-white/5 hover:bg-white/10 text-white/60 text-[7px] font-bold uppercase tracking-widest rounded-md border border-white/5 transition-all"
-                                    >
-                                        Inspect Matrix
                                     </button>
                                 </div>
                             </div>

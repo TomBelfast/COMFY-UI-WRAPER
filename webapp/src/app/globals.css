@@ -329,6 +329,7 @@ body {
   position: relative;
   /* Restore glass effect (remove opaque background override) */
   border-color: transparent !important;
+  --snake-radius: 16px;
 }
 
 .snake-active::before {
@@ -337,7 +338,7 @@ body {
   inset: -3px;
   /* Slightly larger for glow */
   background: conic-gradient(from var(--snake-angle), transparent 60%, var(--emerald-mid), var(--emerald-light), var(--emerald-mid));
-  border-radius: 18px;
+  border-radius: calc(var(--snake-radius) + 2px);
   z-index: -1;
   animation: snake-spin 3s linear infinite;
   filter: blur(8px);
@@ -357,7 +358,7 @@ body {
   inset: -1px;
   /* Sharp line */
   background: conic-gradient(from var(--snake-angle), transparent 60%, var(--emerald-mid), var(--emerald-light), var(--emerald-mid));
-  border-radius: 17px;
+  border-radius: var(--snake-radius);
   z-index: -1;
   animation: snake-spin 3s linear infinite;
 

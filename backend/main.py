@@ -10,9 +10,11 @@ import asyncio
 from routes.comfy import router as comfy_router
 from routes.persistence import router as persistence_router
 from routes.gallery import router as gallery_router
+from routes.auth import router as auth_router
 from services.websocket_manager import get_manager
 from routes.comfy import DEFAULT_COMFYUI_URL
 from database import init_db, SessionLocal, AppConfig
+from migrate_add_auth import run_migration
 
 from services.logging_service import log_manager
 from fastapi import WebSocket, WebSocketDisconnect
@@ -32,7 +34,8 @@ async def startup_event():
     # Set loop for logging
     log_manager.loop = asyncio.get_running_loop()
     
-    # Initialize DB
+    # Run auth migration BEFORE init_db (migration adds columns that models now expect)
+    run_migration()
     init_db()
     
     # Get Config from DB
@@ -63,7 +66,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_requests(request, call_next):
+    logger.debug(f"INCOMING REQUEST: {request.method} {request.url.path}")
+    response = await call_next(request)
+    logger.debug(f"RESPONSE STATUS: {response.status_code} for {request.method} {request.url.path}")
+    return response
+
 # Include Routers
+app.include_router(auth_router)
 app.include_router(comfy_router)
 app.include_router(persistence_router)
 app.include_router(gallery_router)

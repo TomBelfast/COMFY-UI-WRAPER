@@ -141,12 +141,14 @@ export function useGenerationLogic(workflowId: string = "default") {
         if (!positivePrompt) return;
 
         setIsGenerating(true);
+        setGenerationStatus("Starting generation...");
         setCurrentBatchIndex(0);
         setProgress({ value: 0, max: 0 });
         setStartTime(Date.now());
         setElapsedTime(0);
 
         try {
+            fetch(`/api/comfy/debug/batch_count_${batchCount}`);
             for (let i = 0; i < batchCount; i++) {
                 setCurrentBatchIndex(i + 1);
                 setGenerationStatus(`Queuing Batch ${i + 1}/${batchCount}...`);
@@ -166,12 +168,16 @@ export function useGenerationLogic(workflowId: string = "default") {
                 };
 
                 console.log("🚀 SENDING GENERATION REQUEST:", request);
-
+                fetch(`/api/comfy/debug/sending_request_batch_${i}`);
                 const res = await generateImage(request);
+                fetch(`/api/comfy/debug/response_status_${res.status}`);
 
                 if (res.status === 'queued') {
                     setGenerationStatus(`Generating Batch ${i + 1}/${batchCount}...`);
+                    fetch(`/api/comfy/debug/waiting_for_completion_${res.prompt_id}`);
                     const result = await waitForCompletion(res.prompt_id);
+                    fetch(`/api/comfy/debug/completed_${res.prompt_id}`);
+
                     if (result.status === 'success') {
                         setGalleryRefresh(prev => prev + 1);
                     } else {
@@ -179,11 +185,13 @@ export function useGenerationLogic(workflowId: string = "default") {
                     }
                 } else {
                     setGenerationStatus("Failed to queue");
+                    fetch(`/api/comfy/debug/error_res_status_${res.status}`);
                 }
             }
             setGenerationStatus("Finished");
         } catch (e) {
             console.error(e);
+            fetch(`/api/comfy/debug/catch_error_${encodeURIComponent(String(e))}`);
             setGenerationStatus("Error sending request");
         } finally {
             setIsGenerating(false);
