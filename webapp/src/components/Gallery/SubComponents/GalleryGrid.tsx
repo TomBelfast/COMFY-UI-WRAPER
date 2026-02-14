@@ -31,7 +31,7 @@ export default function GalleryGrid({ loading, images, onImageClick, onDelete }:
                     onClick={() => onImageClick(img)}
                 >
                     <img
-                        src={getThumbnailUrl(img.filename, img.subfolder, 300)}
+                        src={getThumbnailUrl(img.filename, img.subfolder, 300, img.image_data)}
                         alt={img.prompt_positive}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"

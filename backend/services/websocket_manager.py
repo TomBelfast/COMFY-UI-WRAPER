@@ -1,5 +1,6 @@
 import asyncio
 import json
+import base64
 from loguru import logger
 import websockets
 from typing import Dict, Set, Optional, Any, Callable
@@ -62,15 +63,15 @@ class ComfyWebSocketManager:
                     # ComfyUI sends both JSON and binary (for previews)
                     if isinstance(message, str):
                         data = json.loads(message)
-                        self.last_message = data
-                        
-                        # Process event for logging
                         event_type = data.get("type", "unknown")
                         payload = data.get("data", {})
                         
+                        if event_type not in ["progress", "crystools.monitor"]:
+                            logger.debug(f"WS EVENT: {event_type} | Data: {json.dumps(data)[:500]}")
+                        
+                        self.last_message = data
+
                         if event_type == "status":
-                            # Only log queue changes to avoid spam
-                            # queue_remaining = payload.get("status", {}).get("exec_info", {}).get("queue_remaining", 0)
                             pass
                         elif event_type == "execution_start":
                             pid = payload.get('prompt_id')
@@ -78,19 +79,21 @@ class ComfyWebSocketManager:
                         elif event_type == "executing":
                             node = payload.get("node")
                             prompt_id = payload.get("prompt_id")
-                            if not node and prompt_id and prompt_id in self.metadata_cache:
+                            if node:
+                                logger.debug(f"ComfyUI: Executing node {node} for prompt {prompt_id}")
+                            elif prompt_id and prompt_id in self.metadata_cache:
                                 logger.success(f"ComfyUI: Execution finished for prompt {prompt_id}")
                                 # Cleanup cache ONLY when the entire prompt is done
-                                del self.metadata_cache[prompt_id]
-                        elif event_type == "progress":
-                            # Skip heavy progress logging unless needed
-                            pass
+                                # But wait! We should probably keep it until 'executed' for all nodes?
+                                # For now, let's delay cleanup or check if it's really the right time.
+                                # del self.metadata_cache[prompt_id] 
+                                pass
                         elif event_type == "executed":
                             # This is the gold mine for auto-save
                             prompt_id = payload.get("prompt_id")
                             node_id = payload.get("node")
                             output = payload.get("output", {})
-                            logger.info(f"ComfyUI: Executed Node {node_id} for prompt {prompt_id}")
+                            logger.success(f"ComfyUI: Node {node_id} EXECUTED for prompt {prompt_id}")
                             
                             if prompt_id in self.metadata_cache:
                                 await self._auto_save_images(prompt_id, output)
@@ -139,20 +142,28 @@ class ComfyWebSocketManager:
                         # Read actual image dimensions from ComfyUI
                         actual_width = metadata.get("width", 1024)
                         actual_height = metadata.get("height", 1024)
+                        # Fetch image data for persistence and dimensions
+                        image_data_b64 = None
                         try:
                             import httpx
+                            import base64
                             from PIL import Image
                             import io
                             view_url = f"{self.base_url}/view?filename={filename}&subfolder={subfolder}&type=output"
-                            async with httpx.AsyncClient(timeout=10.0, trust_env=False) as http_client:
+                            async with httpx.AsyncClient(timeout=20.0, trust_env=False) as http_client:
                                 resp = await http_client.get(view_url)
                                 if resp.status_code == 200:
+                                    # Base64 for persistence
+                                    image_data_b64 = f"data:{resp.headers.get('content-type', 'image/png')};base64,{base64.b64encode(resp.content).decode('utf-8')}"
+                                    
+                                    # Actual dimensions
                                     pil_img = Image.open(io.BytesIO(resp.content))
                                     actual_width = pil_img.size[0]
                                     actual_height = pil_img.size[1]
-                                    logger.debug(f"AUTO-SAVE: Real dimensions for {filename}: {actual_width}x{actual_height}")
-                        except Exception as dim_err:
-                            logger.warning(f"AUTO-SAVE: Could not read dimensions for {filename}: {dim_err}")
+                                    
+                                    logger.debug(f"AUTO-SAVE: Captured {filename} ({actual_width}x{actual_height}, {len(image_data_b64)} chars)")
+                        except Exception as save_err:
+                            logger.warning(f"AUTO-SAVE: Could not process {filename}: {save_err}")
 
                         db_image = GalleryImage(
                             prompt_id=prompt_id,
@@ -167,6 +178,7 @@ class ComfyWebSocketManager:
                             steps=metadata.get("steps", 20),
                             cfg=metadata.get("cfg", 1.0),
                             user_id=metadata.get("user_id"),
+                            image_data=image_data_b64
                         )
                         db.add(db_image)
                         saved_count += 1

@@ -66,6 +66,7 @@ class GalleryImage(Base):
     height = Column(Integer)
     steps = Column(Integer)
     cfg = Column(Float)
+    image_data = Column(Text, nullable=True) # Persistent base64 image data
     created_at = Column(DateTime, default=datetime.utcnow)
 
 def seed_defaults(db_session):

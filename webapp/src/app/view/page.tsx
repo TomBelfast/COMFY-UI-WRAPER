@@ -70,7 +70,7 @@ function ViewContent() {
                 <button
                     id="action-download"
                     className="p-4 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/40 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group shadow-xl"
-                    onClick={() => downloadImage(getImageUrl(current.filename, current.subfolder), `character-${current.id}.png`)}
+                    onClick={() => downloadImage(getImageUrl(current.filename, current.subfolder, "output", current.image_data), `character-${current.id}.png`)}
                     title="Download Frame"
                 >
                     <Download size={24} className="group-hover:scale-110 transition-transform" />
@@ -127,7 +127,7 @@ function ViewContent() {
                     <img
                         id={`view-image-${current.id}`}
                         key={current.id}
-                        src={getImageUrl(current.filename, current.subfolder)}
+                        src={getImageUrl(current.filename, current.subfolder, "output", current.image_data)}
                         alt="Cinematic Matrix View"
                         className={`relative object-contain transition-all duration-700 ease-in-out select-none shadow-[0_0_100px_rgba(0,0,0,0.9)] 
                             ${isZoomed ? 'max-h-none h-auto w-[600px] rounded-sm border-none shadow-none' : 'max-h-[94vh] w-auto rounded-2xl border border-white/5 cursor-zoom-in animate-in fade-in zoom-in-95'}`}

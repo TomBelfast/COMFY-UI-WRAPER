@@ -22,6 +22,7 @@ class GalleryItemCreate(BaseModel):
     height: int
     steps: int
     cfg: float
+    image_data: Optional[str] = None
 
 class GalleryItemResponse(GalleryItemCreate):
     id: int
@@ -53,6 +54,7 @@ def add_to_gallery(item: GalleryItemCreate, db: Session = Depends(get_db), user:
         steps=item.steps,
         cfg=item.cfg,
         user_id=user.id,
+        image_data=item.image_data
     )
     db.add(db_item)
     db.commit()

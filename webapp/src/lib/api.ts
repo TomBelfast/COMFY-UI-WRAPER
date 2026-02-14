@@ -29,16 +29,28 @@ const getGalleryUrl = () => `${getBaseUrl()}/api/gallery`;
 // --- Auth Token Management ---
 
 export const getToken = (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token');
+    try {
+        if (typeof window === 'undefined' || !window.localStorage) return null;
+        return localStorage.getItem('auth_token');
+    } catch {
+        return null;
+    }
 };
 
 export const setToken = (token: string) => {
-    localStorage.setItem('auth_token', token);
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('auth_token', token);
+        }
+    } catch { }
 };
 
 export const clearToken = () => {
-    localStorage.removeItem('auth_token');
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.removeItem('auth_token');
+        }
+    } catch { }
 };
 
 const authHeaders = (): Record<string, string> => {
@@ -49,12 +61,17 @@ const authHeaders = (): Record<string, string> => {
     return {};
 };
 
-const authFetch = (url: string, options: RequestInit = {}): Promise<Response> => {
+export const authFetch = (url: string, options: RequestInit = {}): Promise<Response> => {
     const headers = {
         ...authHeaders(),
         ...(options.headers || {}),
     };
     return fetch(url, { ...options, headers });
+};
+
+export const fetchPromptStatus = async (promptId: string) => {
+    const res = await authFetch(`/api/comfy/status/${promptId}`);
+    return await res.json();
 };
 
 // --- Auth API ---
@@ -116,13 +133,19 @@ export const updateProfile = async (data: { display_name?: string; comfyui_url?:
 
 // --- Existing API (now with auth) ---
 
-export const getImageUrl = (filename: string, subfolder: string = "", type: string = "output") => {
+export const getImageUrl = (filename: string, subfolder: string = "", type: string = "output", imageData?: string) => {
+    if (imageData && imageData.startsWith('data:image')) {
+        return imageData;
+    }
     let url = `${getApiBaseUrl()}/image?filename=${filename}&type=${type}`;
     if (subfolder) url += `&subfolder=${subfolder}`;
     return url;
 };
 
-export const getThumbnailUrl = (filename: string, subfolder: string = "", maxSize: number = 300) => {
+export const getThumbnailUrl = (filename: string, subfolder: string = "", maxSize: number = 300, imageData?: string) => {
+    if (imageData && imageData.startsWith('data:image')) {
+        return imageData;
+    }
     let url = `${getApiBaseUrl()}/thumbnail?filename=${filename}&max_size=${maxSize}`;
     if (subfolder) url += `&subfolder=${subfolder}`;
     return url;
@@ -295,6 +318,7 @@ export interface GalleryItem {
     height: number;
     steps: number;
     cfg: number;
+    image_data?: string;
     created_at: string;
 }
 
@@ -309,6 +333,7 @@ export interface GalleryItemCreate {
     steps: number;
     cfg: number;
     workflow_id?: string;
+    image_data?: string;
 }
 
 export const fetchGallery = async (workflowId?: string): Promise<GalleryItem[]> => {

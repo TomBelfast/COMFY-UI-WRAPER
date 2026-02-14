@@ -27,19 +27,31 @@ kill_port() {
 # Kill anything that might be running
 kill_port $BACKEND_PORT
 kill_port $FRONTEND_PORT
-pkill -f "uvicorn main:app"
-pkill -f "next dev"
+pkill -9 -f "uvicorn main:app"
+pkill -9 -f "next dev"
+pkill -9 -f "test_save_logic.py"
 
 # Ensure log files exist and are truncated
-> $PROJECT_ROOT/backend_dev.log
-> $PROJECT_ROOT/frontend_dev.log
+cat /dev/null > $PROJECT_ROOT/backend_dev.log
+cat /dev/null > $PROJECT_ROOT/frontend_dev.log
 
 # 1. Start Backend
 echo "🚀 [1/2] Starting Backend (FastAPI) at port $BACKEND_PORT..."
 cd $PROJECT_ROOT/backend
 export LOGURU_LEVEL=DEBUG
-nohup ./venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port $BACKEND_PORT --log-level debug >> $PROJECT_ROOT/backend_dev.log 2>&1 &
+# Use unbuffered output for python
+nohup ./venv/bin/python3 -u -m uvicorn main:app --host 0.0.0.0 --port $BACKEND_PORT --log-level debug >> $PROJECT_ROOT/backend_dev.log 2>&1 &
 BACKEND_PID=$!
+
+# Wait for backend to start
+for i in {1..10}; do
+    if curl -s http://localhost:$BACKEND_PORT/health > /dev/null; then
+        echo "✅ Backend is UP and responding."
+        break
+    fi
+    echo "   ... waiting for backend ($i/10)"
+    sleep 1
+done
 
 # 2. Start Frontend
 echo "🚀 [2/2] Starting Frontend (Next.js) at port $FRONTEND_PORT..."

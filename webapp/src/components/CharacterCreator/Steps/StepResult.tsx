@@ -127,7 +127,7 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                 <div className="relative mb-12 group">
                     <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full animate-pulse" />
                     <img
-                        src={getImageUrl(selectedImage.filename, selectedImage.subfolder)}
+                        src={getImageUrl(selectedImage.filename, selectedImage.subfolder, "output", selectedImage.image_data)}
                         className="w-[400px] aspect-[9/16] object-cover rounded-[32px] border-2 border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.3)] relative z-10"
                         alt="Selected"
                     />
@@ -179,7 +179,7 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                             className="relative w-full max-w-[220px] aspect-[9/16] bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-2xl group transition-all hover:scale-[1.02] hover:border-emerald-500/30"
                         >
                             <img
-                                src={getImageUrl(img.filename, img.subfolder)}
+                                src={getImageUrl(img.filename, img.subfolder, "output", img.image_data)}
                                 alt={`Result ${idx + 1}`}
                                 className="w-full h-full object-cover cursor-zoom-in group-hover:scale-110 transition-transform duration-700"
                                 onClick={() => openPreview(idx)}
@@ -191,7 +191,7 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                                     id={`download-${img.id}`}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        downloadImage(getImageUrl(img.filename, img.subfolder), `character-${img.id}.png`);
+                                        downloadImage(getImageUrl(img.filename, img.subfolder, "output", img.image_data), `character-${img.id}.png`);
                                     }}
                                     className="p-2 bg-black/60 hover:bg-emerald-500 rounded-lg text-white hover:text-black transition-all border border-white/10"
                                     title="Download Image"

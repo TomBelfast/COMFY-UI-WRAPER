@@ -36,7 +36,7 @@ class UserResponse(BaseModel):
     is_admin: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProfileUpdate(BaseModel):
@@ -64,7 +64,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         _adopt_orphaned_data(db, user.id)
 
     token = create_access_token(user.id, user.username)
-    return {"token": token, "user": UserResponse.from_orm(user)}
+    return {"token": token, "user": UserResponse.model_validate(user)}
 
 
 @router.post("/login")
@@ -76,7 +76,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token(user.id, user.username)
-    return {"token": token, "user": UserResponse.from_orm(user)}
+    return {"token": token, "user": UserResponse.model_validate(user)}
 
 
 @router.get("/me", response_model=UserResponse)

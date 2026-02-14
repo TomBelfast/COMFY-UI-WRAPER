@@ -59,6 +59,7 @@ export default function WorkflowPage({
                         setSampler={logic.setSampler}
                         title={title}
                         selectedModel={logic.selectedModel}
+                        workflowId={workflowId}
                     />
                 </div>
 

@@ -9,7 +9,8 @@ import {
     savePreset,
     deletePreset,
     GenerationPreset,
-    useComfyWebSocket
+    useComfyWebSocket,
+    fetchPromptStatus
 } from "@/lib/api";
 
 export function useGenerationLogic(workflowId: string = "default") {
@@ -120,8 +121,7 @@ export function useGenerationLogic(workflowId: string = "default") {
         return new Promise((resolve) => {
             const pollInterval = setInterval(async () => {
                 try {
-                    const statusRes = await fetch(`/api/comfy/status/${promptId}`);
-                    const statusData = await statusRes.json();
+                    const statusData = await fetchPromptStatus(promptId);
 
                     if (statusData.status === 'completed' && (statusData.filename || statusData.filenames)) {
                         clearInterval(pollInterval);
@@ -166,6 +166,11 @@ export function useGenerationLogic(workflowId: string = "default") {
                     batch_size: batchSize,
                     workflow_id: workflowId,
                 };
+
+                // Force CFG 1.0 for Turbo workflows
+                if (workflowId === 'turbo-gen' || workflowId === 'upscale') {
+                    request.cfg = 1.0;
+                }
 
                 console.log("🚀 SENDING GENERATION REQUEST:", request);
                 fetch(`/api/comfy/debug/sending_request_batch_${i}`);
@@ -231,7 +236,13 @@ export function useGenerationLogic(workflowId: string = "default") {
         if (preset.width) setWidth(preset.width);
         if (preset.height) setHeight(preset.height);
         if (preset.steps) setSteps(preset.steps);
-        if (preset.cfg) setCfg(preset.cfg);
+        if (preset.cfg) {
+            if (workflowId === 'turbo-gen' || workflowId === 'upscale') {
+                setCfg(1.0);
+            } else {
+                setCfg(preset.cfg);
+            }
+        }
     };
 
     const handleLoadGalleryItem = (item: any) => {
@@ -241,7 +252,13 @@ export function useGenerationLogic(workflowId: string = "default") {
         if (item.width) setWidth(item.width);
         if (item.height) setHeight(item.height);
         if (item.steps) setSteps(item.steps);
-        if (item.cfg) setCfg(item.cfg);
+        if (item.cfg) {
+            if (workflowId === 'turbo-gen' || workflowId === 'upscale') {
+                setCfg(1.0);
+            } else {
+                setCfg(item.cfg);
+            }
+        }
     };
 
     const handleDeletePreset = async (name: string, e: React.MouseEvent) => {

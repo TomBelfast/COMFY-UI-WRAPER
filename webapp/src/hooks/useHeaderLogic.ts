@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { clearVram } from '@/lib/api';
+import { clearVram, fetchHealth } from '@/lib/api';
 
 interface ComfyStatus {
     status: "connected" | "disconnected" | "checking";
@@ -18,13 +18,8 @@ export function useHeaderLogic() {
     useEffect(() => {
         const checkConnection = async () => {
             try {
-                const response = await fetch("/api/comfy/health");
-                if (response.ok) {
-                    const data = await response.json();
-                    setComfyStatus(data);
-                } else {
-                    setComfyStatus({ status: "disconnected" });
-                }
+                const data = await fetchHealth();
+                setComfyStatus(data as any);
             } catch {
                 setComfyStatus({ status: "disconnected" });
             }

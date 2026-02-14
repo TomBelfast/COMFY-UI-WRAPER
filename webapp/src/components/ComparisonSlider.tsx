@@ -19,8 +19,8 @@ export default function ComparisonSlider({ original, upscaled, className = "" }:
 
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const beforeUrl = getImageUrl(original.filename, original.subfolder);
-    const afterUrl = getImageUrl(upscaled.filename, upscaled.subfolder);
+    const beforeUrl = getImageUrl(original.filename, original.subfolder, "output", original.image_data);
+    const afterUrl = getImageUrl(upscaled.filename, upscaled.subfolder, "output", upscaled.image_data);
 
     // --- ZOOM LOGIC ---
     const handleWheel = (e: React.WheelEvent) => {

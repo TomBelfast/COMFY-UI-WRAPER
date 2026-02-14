@@ -12,6 +12,7 @@ interface ParameterPanelProps {
     setSampler: (val: string) => void;
     title: string;
     selectedModel: string;
+    workflowId?: string;
 }
 
 const CONSTANT_SAMPLERS = [
@@ -29,8 +30,18 @@ export default function ParameterPanel({
     cfg, setCfg,
     sampler, setSampler,
     title,
-    selectedModel
+    selectedModel,
+    workflowId
 }: ParameterPanelProps) {
+    const isTurbo = workflowId === 'turbo-gen' || workflowId === 'upscale';
+
+    // Force CFG 1.0 for turbo if somehow changed
+    React.useEffect(() => {
+        if (isTurbo && cfg !== 1.0) {
+            setCfg(1.0);
+        }
+    }, [isTurbo, cfg, setCfg]);
+
     return (
         <div className="glass-card p-6 border-white/5 animate-fade-in-up stagger-2">
             <span className="text-label border-b border-white/5 pb-2 !tracking-widest">Core Parameters</span>
@@ -49,19 +60,21 @@ export default function ParameterPanel({
                     />
                 </div>
 
-                <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-label !tracking-normal">CFG Force</span>
-                        <span className="text-xs font-bold text-emerald-500">{cfg}</span>
+                {!isTurbo && (
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-label !tracking-normal">CFG Force</span>
+                            <span className="text-xs font-bold text-emerald-500">{cfg}</span>
+                        </div>
+                        <input
+                            id="param-cfg-slider"
+                            type="range" min="0" max="20" step="0.1" value={cfg}
+                            onChange={(e) => setCfg(Number(e.target.value))}
+                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                            suppressHydrationWarning
+                        />
                     </div>
-                    <input
-                        id="param-cfg-slider"
-                        type="range" min="0" max="20" step="0.1" value={cfg}
-                        onChange={(e) => setCfg(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                        suppressHydrationWarning
-                    />
-                </div>
+                )}
 
                 <div>
                     <div className="flex items-center justify-between mb-2">

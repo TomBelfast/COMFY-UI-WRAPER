@@ -61,7 +61,7 @@ export default function GenerationGate({
     gatewayName
 }: GenerationGateProps) {
     return (
-        <div className={`glass-card card-3d-cinematic p-6 animate-fade-in-up stagger-1 relative ${isProcessing ? 'snake-active' : ''}`}>
+        <div className={`glass-card card-3d-cinematic p-6 animate-fade-in-up stagger-1 relative ${isGenerating ? 'snake-active' : ''}`}>
 
             {/* Action Bar */}
             <div className="absolute top-6 right-6 flex gap-2 z-10">

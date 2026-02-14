@@ -274,11 +274,13 @@ def build_comfy_workflow(request: ImageGenerateRequest) -> Dict[str, Any]:
         workflow["3"]["inputs"]["text"] = request.negative_prompt or "low quality, blurry"
 
     # 3. Set Dimensions and Batch Size
-    if "4" in workflow and "width" in workflow["4"]["inputs"]:
-        workflow["4"]["inputs"]["width"] = request.width
-    if "6" in workflow and "width" in workflow["6"]["inputs"]: 
-        workflow["6"]["inputs"]["width"] = request.width
-        workflow["6"]["inputs"]["height"] = request.height
+    if "4" in workflow and "inputs" in workflow["4"]:
+        if "width" in workflow["4"]["inputs"]:
+            workflow["4"]["inputs"]["width"] = request.width
+        if "height" in workflow["4"]["inputs"]:
+            workflow["4"]["inputs"]["height"] = request.height
+        if "batch_size" in workflow["4"]["inputs"]:
+            workflow["4"]["inputs"]["batch_size"] = request.batch_size or 1
 
     # 4. Set Sampler (Seed, Steps, CFG)
     sampler_node_id = "5"

@@ -219,7 +219,21 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db), user: User
                             image_urls.append(url_img)
                         break
 
-            logger.success(f"STATUS: Prompt {prompt_id} finished with {len(image_urls)} images")
+            logger.success(f"STATUS: Prompt {prompt_id} finished in ComfyUI with {len(image_urls)} images")
+            
+            # CRITICAL: Synchronization with Auto-Save
+            # If ComfyUI is done, wait a tiny bit to see if it's already in our DB Gallery
+            # This prevents the frontend from refreshing the gallery before the save is finalized.
+            if first_filename:
+                gallery_entry = db.query(GalleryImage).filter(GalleryImage.prompt_id == prompt_id).first()
+                if not gallery_entry:
+                    logger.warning(f"STATUS: Prompt {prompt_id} done in Comfy, but NOT YET in Gallery DB. Returning 'processing' to buy time.")
+                    return ImageStatusResponse(
+                        prompt_id=prompt_id,
+                        status="saving", # Special status to indicate it's done but being saved
+                        ready=False
+                    )
+
             return ImageStatusResponse(
                 prompt_id=prompt_id,
                 status="completed",
@@ -235,12 +249,27 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db), user: User
         raise HTTPException(status_code=503, detail=f"ComfyUI unavailable: {str(e)}")
 
 @router.get("/image")
-async def get_image(filename: str, subfolder: str = "", type: str = "output", db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Retrieve an image from ComfyUI."""
-    url = get_comfy_url(db, user)
+async def get_image(filename: str, subfolder: str = "", type: str = "output", db: Session = Depends(get_db)):
+    """Retrieve an image from ComfyUI (public - used by <img src>)."""
+    url = get_comfy_url(db)
     async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
         resp = await client.get(f"{url}/view?filename={filename}&subfolder={subfolder}&type={type}")
         return Response(content=resp.content, media_type=resp.headers.get("content-type"))
+
+@router.get("/thumbnail")
+async def get_thumbnail(filename: str, subfolder: str = "", max_size: int = 300, db: Session = Depends(get_db)):
+    """Retrieve a thumbnail from ComfyUI (public - used by <img src>)."""
+    url = get_comfy_url(db)
+    async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
+        resp = await client.get(f"{url}/view?filename={filename}&subfolder={subfolder}&type=output")
+        if resp.status_code != 200:
+            raise HTTPException(status_code=resp.status_code, detail="Image not found")
+        img = Image.open(io.BytesIO(resp.content))
+        img.thumbnail((max_size, max_size), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="WEBP", quality=80)
+        buf.seek(0)
+        return Response(content=buf.read(), media_type="image/webp")
 
 @router.post("/interrupt")
 async def interrupt(db: Session = Depends(get_db), user: User = Depends(get_current_user)):

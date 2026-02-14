@@ -242,7 +242,7 @@ Generated via Cinematic Matrix`.trim();
                                 onClick={() => handleImageClick(img)}
                             >
                                 <img
-                                    src={getImageUrl(img.filename, img.subfolder)}
+                                    src={getImageUrl(img.filename, img.subfolder, "output", img.image_data)}
                                     alt={img.prompt_positive}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     loading="lazy"
@@ -343,16 +343,9 @@ Generated via Cinematic Matrix`.trim();
                                     {/* Aura Glow Effect */}
                                     <div className={`absolute inset-0 bg-emerald-500/20 blur-[120px] rounded-full transition-opacity duration-1000 z-0 ${isGenerating ? 'opacity-100 animate-aura-pulse' : 'opacity-0'}`} />
 
-                                    {/* Snake Border Container */}
-                                    {isGenerating && (
-                                        <div className="absolute -inset-[3px] rounded-lg overflow-hidden pointer-events-none z-0">
-                                            <div className="absolute inset-[-50%] bg-[conic-gradient(transparent_0deg,transparent_90deg,#10b981_180deg,transparent_270deg)] animate-[spin_4s_linear_infinite]" />
-                                        </div>
-                                    )}
-
                                     <img
                                         key={selectedImage.id}
-                                        src={getImageUrl(selectedImage.filename, selectedImage.subfolder)}
+                                        src={getImageUrl(selectedImage.filename, selectedImage.subfolder, "output", selectedImage.image_data)}
                                         alt={selectedImage.prompt_positive}
                                         className={`max-w-full max-h-[85vh] object-contain shadow-[0_30px_100px_rgba(0,0,0,0.5)] transition-all duration-1000 ${isGenerating ? 'opacity-40 blur-[4px] grayscale-[0.5]' : 'opacity-100 blur-0 grayscale-0 animate-matrix-decode'}`}
                                         onClick={(e) => e.stopPropagation()}
@@ -391,11 +384,11 @@ Generated via Cinematic Matrix`.trim();
                                         key={img.id}
                                         onClick={() => handleImageClick(img)}
                                         className={`relative w-16 h-16 rounded overflow-hidden cursor-pointer transition-all duration-300 border ${(selectedImage?.id === img.id || comparisonPair?.upscaled.id === img.id || comparisonPair?.original.id === img.id)
-                                                ? 'border-emerald-500 scale-110 shadow-[0_0_15px_#10b981]'
-                                                : 'border-white/10 opacity-50 hover:opacity-100 hover:border-white/30'
+                                            ? 'border-emerald-500 scale-110 shadow-[0_0_15px_#10b981]'
+                                            : 'border-white/10 opacity-50 hover:opacity-100 hover:border-white/30'
                                             }`}
                                     >
-                                        <img src={getImageUrl(img.filename, img.subfolder)} className="w-full h-full object-cover" loading="lazy" />
+                                        <img src={getImageUrl(img.filename, img.subfolder, "output", img.image_data)} className="w-full h-full object-cover" loading="lazy" />
                                     </div>
                                 ))}
                             </div>
@@ -482,10 +475,12 @@ Generated via Cinematic Matrix`.trim();
                                         <span className="text-label !text-[8px] !text-emerald-400 block mb-1">Steps</span>
                                         <span className="text-[10px] text-white/90 font-mono font-bold block">{activeItem?.steps}</span>
                                     </div>
-                                    <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.1] group hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-300">
-                                        <span className="text-label !text-[8px] !text-emerald-400 block mb-1">CFG</span>
-                                        <span className="text-[10px] text-emerald-400 font-mono font-black block">{activeItem?.cfg}</span>
-                                    </div>
+                                    {(activeItem?.workflow_id !== 'turbo-gen' && activeItem?.workflow_id !== 'upscale' && workflowId !== 'turbo-gen' && workflowId !== 'upscale') && (
+                                        <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.1] group hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-300">
+                                            <span className="text-label !text-[8px] !text-emerald-400 block mb-1">CFG</span>
+                                            <span className="text-[10px] text-emerald-400 font-mono font-black block">{activeItem?.cfg}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

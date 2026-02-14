@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { clearVram, interrupt_generation } from '@/lib/api';
+import { clearVram, interrupt_generation, fetchHealth } from '@/lib/api';
 import SettingsModal from "./SettingsModal";
 import { useAuth } from "./AuthProvider";
 
@@ -28,13 +28,8 @@ export default function Header() {
     useEffect(() => {
         const checkConnection = async () => {
             try {
-                const response = await fetch("/api/comfy/health");
-                if (response.ok) {
-                    const data = await response.json();
-                    setComfyStatus(data);
-                } else {
-                    setComfyStatus({ status: "disconnected" });
-                }
+                const data = await fetchHealth();
+                setComfyStatus(data);
             } catch {
                 setComfyStatus({ status: "disconnected" });
             }

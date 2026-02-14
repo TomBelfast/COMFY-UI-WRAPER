@@ -35,10 +35,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     useEffect(() => {
         // On mount: check if user is authenticated (Tailscale headers or JWT)
-        fetchMe().then((u) => {
-            setUser(u);
-            setLoading(false);
-        });
+        fetchMe()
+            .then((u) => {
+                setUser(u);
+            })
+            .catch(() => {
+                setUser(null);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     }, []);
 
     const login = useCallback(async (username: string, password: string) => {

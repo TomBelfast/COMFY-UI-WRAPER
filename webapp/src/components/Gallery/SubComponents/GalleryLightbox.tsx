@@ -66,7 +66,7 @@ export default function GalleryLightbox({
                 <img
                     id="lightbox-display-image"
                     key={item.id}
-                    src={getImageUrl(item.filename, item.subfolder)}
+                    src={getImageUrl(item.filename, item.subfolder, "output", item.image_data)}
                     alt={item.prompt_positive}
                     className="max-w-full max-h-[85%] object-contain shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-scale-in"
                     onClick={(e) => e.stopPropagation()}
@@ -87,7 +87,7 @@ export default function GalleryLightbox({
                                 className={`w-14 h-20 flex-shrink-0 cursor-pointer rounded border-2 transition-all ${idx === currentIndex ? 'border-emerald-500 scale-110' : 'border-white/10 opacity-40 hover:opacity-100'}`}
                             >
                                 <img
-                                    src={getThumbnailUrl(img.filename, img.subfolder, 100)}
+                                    src={getThumbnailUrl(img.filename, img.subfolder, 100, img.image_data)}
                                     className="w-full h-full object-cover rounded-sm"
                                     loading="lazy"
                                 />
@@ -116,7 +116,7 @@ export default function GalleryLightbox({
                     <div className="flex gap-2">
                         <button
                             id="lightbox-download-action"
-                            onClick={() => downloadImage(getImageUrl(item.filename, item.subfolder), `creation-${item.id}.png`)}
+                            onClick={() => downloadImage(getImageUrl(item.filename, item.subfolder, "output", item.image_data), `creation-${item.id}.png`)}
                             className="p-1.5 border border-white/20 text-white/60 hover:border-emerald-500/50 hover:text-emerald-400 rounded-md transition-all"
                             title="Download Creation"
                         >
