@@ -7,10 +7,10 @@ export default function UpscalePage() {
     return (
         <WorkflowPage
             title="Z-Turbo Upscale"
-            defaultModel="SDXL_Upscale_4x.safetensors"
-            defaultSteps={20}
-            defaultCfg={2.0}
-            defaultSampler="euler"
+            defaultModel="z-image-turbo-bf16-aio.safetensors"
+            defaultSteps={8}
+            defaultCfg={1.0}
+            defaultSampler="res_multistep"
             gatewayName="Upscale Node"
             workflowId="upscale"
         />

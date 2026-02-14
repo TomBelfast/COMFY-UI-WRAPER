@@ -153,7 +153,14 @@ class ComfyWebSocketManager:
                 db.commit()
                 logger.success(f"AUTO-SAVE: Successfully saved {saved_count} images for prompt {prompt_id} to DB")
                 # Broadcast gallery update event
-                update_msg = {"type": "gallery_updated", "data": {"prompt_id": prompt_id, "count": saved_count}}
+                update_msg = {
+                    "type": "gallery_updated", 
+                    "data": {
+                        "prompt_id": prompt_id, 
+                        "count": saved_count,
+                        "workflow_id": metadata.get("workflow_id", "default")
+                    }
+                }
                 logger.debug(f"BROADCAST: Sending gallery_updated signal: {update_msg}")
                 await self._broadcast(update_msg)
             else:

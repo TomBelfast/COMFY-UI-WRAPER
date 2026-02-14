@@ -74,6 +74,8 @@ export default function Header() {
         try {
             await interrupt_generation();
             setStatusMessage("Stopped");
+            // Global event to reset UI in all labs
+            window.dispatchEvent(new CustomEvent('comfy-stop'));
         } catch (e) {
             setStatusMessage("Error stopping");
         } finally {

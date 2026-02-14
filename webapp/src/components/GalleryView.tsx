@@ -25,7 +25,7 @@ export default function GalleryView({
     handleGenerate,
     isGenerating,
     progress = { value: 0, max: 1 },
-    workflowId = "default"
+    workflowId = "turbo-gen"
 }: GalleryViewProps) {
     const [images, setImages] = useState<GalleryItem[]>([]);
     const [loading, setLoading] = useState(false);

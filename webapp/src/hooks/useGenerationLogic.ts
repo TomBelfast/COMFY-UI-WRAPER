@@ -82,14 +82,39 @@ export function useGenerationLogic(workflowId: string = "default") {
         if (
             lastMessage.type === 'gallery_updated' ||
             lastMessage.type === 'executed' ||
-            (lastMessage.type === 'executing' && lastMessage.data.node === null)
+            (lastMessage.type === 'executing' && lastMessage.data.node === null) ||
+            lastMessage.type === 'execution_interrupted'
         ) {
-            if (lastMessage.type === 'executed' || (lastMessage.type === 'executing' && lastMessage.data.node === null)) {
+            // Check if this update belongs to our lab
+            const msgWorkflowId = lastMessage.data?.workflow_id;
+
+            // For executed/interrupted messages, we might not always have workflow_id, 
+            // but for gallery_updated we definitely do now.
+            if (lastMessage.type === 'gallery_updated' && msgWorkflowId && msgWorkflowId !== workflowId) {
+                return; // Not our lab, ignore
+            }
+
+            if (lastMessage.type === 'executed' || (lastMessage.type === 'executing' && lastMessage.data.node === null) || lastMessage.type === 'execution_interrupted') {
                 setIsProcessing(false);
+                setIsGenerating(false);
             }
             setGalleryRefresh(prev => prev + 1);
         }
     }, [lastMessage]);
+
+    // Global stop listener for Header STOP button
+    useEffect(() => {
+        const handleStop = () => {
+            setIsGenerating(false);
+            setIsProcessing(false);
+            setProgress({ value: 0, max: 0 });
+            setStartTime(null);
+            setGenerationStatus("Interrupted");
+        };
+
+        window.addEventListener('comfy-stop', handleStop);
+        return () => window.removeEventListener('comfy-stop', handleStop);
+    }, []);
 
     const waitForCompletion = async (promptId: string): Promise<any> => {
         return new Promise((resolve) => {

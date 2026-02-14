@@ -30,10 +30,10 @@ class GalleryItemResponse(GalleryItemCreate):
         orm_mode = True
 
 @router.get("", response_model=List[GalleryItemResponse])
-def get_gallery(workflow_id: str = "default", limit: int = 50, db: Session = Depends(get_db)):
+def get_gallery(workflow_id: Optional[str] = None, limit: int = 50, db: Session = Depends(get_db)):
     """Get gallery images for a specific workflow, newest first."""
     query = db.query(GalleryImage)
-    if workflow_id != "all":
+    if workflow_id and workflow_id != "all":
         query = query.filter(GalleryImage.workflow_id == workflow_id)
     return query.order_by(desc(GalleryImage.created_at)).limit(limit).all()
 
