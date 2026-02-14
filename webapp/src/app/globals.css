@@ -326,7 +326,7 @@ body {
 }
 
 .snake-active {
-  position: relative;
+  /* Remove position: relative to avoid overriding absolute on nav buttons */
   /* Restore glass effect (remove opaque background override) */
   border-color: transparent !important;
   --snake-radius: 16px;

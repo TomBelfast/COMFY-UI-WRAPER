@@ -176,7 +176,7 @@ export default function CharacterWizard() {
                 {/* Navigation - BACK */}
                 {currentStep > 0 && (
                     <button
-                        className="absolute -left-20 top-1/2 -translate-y-1/2 z-[100] p-6 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/20 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group/nav"
+                        className="absolute -left-32 top-1/2 -translate-y-1/2 z-[100] p-6 bg-white/5 hover:bg-emerald-500/20 rounded-full text-white/20 hover:text-emerald-400 transition-all backdrop-blur-md border border-white/5 group/nav"
                         onClick={prevStep}
                         title="Back"
                     >
@@ -187,12 +187,13 @@ export default function CharacterWizard() {
                 {/* Navigation - NEXT / GENERATE */}
                 {currentStep < 5 && isVisible && (
                     <button
-                        className={`absolute -right-20 top-1/2 -translate-y-1/2 z-[100] p-6 transition-all backdrop-blur-md border group/nav shadow-2xl rounded-full
+                        className={`absolute -right-32 top-1/2 -translate-y-1/2 z-[100] p-6 transition-all backdrop-blur-md border group/nav shadow-2xl rounded-full
                             ${isStepValid()
                                 ? 'bg-emerald-500/10 hover:bg-emerald-500/30 text-emerald-500 border-emerald-500/30'
                                 : 'bg-white/5 text-white/10 border-white/5 cursor-not-allowed opacity-50'}
                             ${currentStep === 4 && !hasExistingResult && isStepValid() ? 'snake-active' : ''}
                         `}
+                        style={{ '--snake-radius': '9999px' } as React.CSSProperties}
                         onClick={handleNext}
                         disabled={!isStepValid()}
                         title={currentStep === 4 ? (hasExistingResult ? "Next to Result" : "Generate Matrix") : "Next Step"}
@@ -209,7 +210,7 @@ export default function CharacterWizard() {
                 )}
 
                 <div
-                    className={`h-[850px] glass-card p-8 rounded-[40px] border border-white/5 relative bg-[#18181b]/30 backdrop-blur-3xl shadow-2xl transition-all duration-500 w-full flex flex-col items-center justify-start overflow-hidden ${(isGenerating || (currentStep === 4 && isStepValid() && !hasExistingResult)) ? 'snake-active' : ''}`}
+                    className={`h-[850px] glass-card p-8 rounded-[40px] border border-white/5 relative bg-[#18181b]/30 backdrop-blur-3xl shadow-2xl transition-all duration-500 w-full flex flex-col items-center justify-start ${(isGenerating || (currentStep === 4 && isStepValid() && !hasExistingResult)) ? 'snake-active' : ''}`}
                     style={{ '--snake-radius': '40px' } as React.CSSProperties}
                 >
                     {/* Background Decorative Element */}
