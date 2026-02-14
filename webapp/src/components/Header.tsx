@@ -115,6 +115,20 @@ export default function Header() {
                             </div>
                         )}
                     </div>
+
+                    {/* STOP Button - Moved next to Comfy */}
+                    <button
+                        onClick={handleInterrupt}
+                        disabled={isInterrupting}
+                        className={`flex items-center gap-2 px-3 h-10 rounded-lg bg-red-500/10 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/60 transition-all group ${isInterrupting ? 'opacity-50' : ''} shadow-[0_0_15px_rgba(239,68,68,0.1)]`}
+                        title="INTERRUPT GENERATION"
+                    >
+                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" />
+                        </svg>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-red-400 group-hover:text-white">Stop</span>
+                    </button>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -125,21 +139,8 @@ export default function Header() {
                         </div>
                     )}
 
-                    {/* Emergency Controls */}
+                    {/* Emergency Controls (Only Purge remains here) */}
                     <div className="flex items-center gap-2 border-r border-white/10 pr-6 mr-2 h-10">
-                        <button
-                            onClick={handleInterrupt}
-                            disabled={isInterrupting}
-                            className={`flex items-center gap-2 px-3 h-full rounded-lg bg-red-500/5 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/50 transition-all group ${isInterrupting ? 'opacity-50' : ''}`}
-                            title="INTERRUPT GENERATION"
-                        >
-                            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" />
-                            </svg>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-red-500/80 group-hover:text-red-500">Stop</span>
-                        </button>
-
                         <button
                             onClick={handleClearVram}
                             disabled={isClearing}
