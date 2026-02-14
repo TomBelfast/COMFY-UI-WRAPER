@@ -138,12 +138,12 @@ export default function Header() {
                             )}
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 leading-none mb-1">Grid Status</span>
+                            <span className="text-label !tracking-widest !text-[9px] mb-1">Grid Status</span>
                             <span className="text-xs font-bold text-white/95 leading-none">{statusLabels[comfyStatus.status]}</span>
                         </div>
                         {comfyStatus.devices && comfyStatus.devices.length > 0 && comfyStatus.devices[0].vram_total && (
                             <div className="ml-4 border-l border-white/10 pl-4 flex flex-col items-end">
-                                <span className="text-[9px] text-emerald-500/70 font-bold uppercase tracking-widest leading-none mb-1">VRAM Reserve</span>
+                                <span className="text-label !tracking-widest !text-[9px] !text-emerald-500/70 mb-1">VRAM Reserve</span>
                                 <span className="text-sm font-mono font-bold text-emerald-400 leading-none">
                                     {formatVram(comfyStatus.devices[0].vram_total, comfyStatus.devices[0].vram_free || 0)}
                                 </span>
@@ -153,9 +153,9 @@ export default function Header() {
 
                     {/* Navigation Protocols */}
                     <nav className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5">
-                        <Link href="/" className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300 hover:bg-white/5 rounded-lg transition-all">Turbo</Link>
-                        <Link href="/flux" className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white/90 hover:bg-white/5 rounded-lg transition-all">Flux</Link>
-                        <Link href="/basic" className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white/90 hover:bg-white/5 rounded-lg transition-all">Basic</Link>
+                        <Link href="/" className="px-4 py-2 text-label !tracking-widest hover:text-emerald-300 hover:bg-white/5 rounded-lg transition-all !text-emerald-400">Turbo</Link>
+                        <Link href="/flux" className="px-4 py-2 text-label !tracking-widest hover:text-white hover:bg-white/5 rounded-lg transition-all">Flux</Link>
+                        <Link href="/basic" className="px-4 py-2 text-label !tracking-widest hover:text-white hover:bg-white/5 rounded-lg transition-all">Basic</Link>
                         <div className="w-px h-4 bg-white/10 mx-2" />
                         <button
                             className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all"

@@ -75,13 +75,15 @@ body {
   text-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
 }
 
-/* System Labels */
+/* System Labels - Default Brightness increased */
 .text-label {
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.3em;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  /* Changed from text-muted to text-secondary for better visibility */
+  opacity: 0.9;
 }
 
 /* ============================================

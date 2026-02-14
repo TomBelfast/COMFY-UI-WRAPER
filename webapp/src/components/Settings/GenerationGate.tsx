@@ -109,14 +109,14 @@ export default function GenerationGate({
                 </div>
             )}
 
-            <span className="text-label !text-white/60">{gatewayName}</span>
+            <span className="text-label">{gatewayName}</span>
             <h2 className="text-title text-3xl mt-2 mb-6">{title}</h2>
 
             <div className="space-y-4">
                 <div>
-                    <label className="text-label !text-white/80 block mb-2">Neural Input (Positive)</label>
+                    <label className="text-label block mb-2">Neural Input (Positive)</label>
                     <textarea
-                        className="input-glass h-32 resize-none w-full focus:border-emerald-500/50 transition-all placeholder:text-white/20"
+                        className="input-glass h-32 resize-none w-full focus:border-emerald-500/50 transition-all"
                         placeholder="Describe your vision..."
                         value={positivePrompt}
                         onChange={(e) => setPositivePrompt(e.target.value)}
@@ -127,18 +127,18 @@ export default function GenerationGate({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="text-label !text-white/80 block mb-2">Neural Filter (Negative)</label>
+                        <label className="text-label block mb-2">Neural Filter (Negative)</label>
                         <input
                             id="negative-prompt"
                             type="text"
-                            className="input-glass w-full placeholder:text-white/20"
+                            className="input-glass w-full"
                             placeholder="Artifacts, low quality..."
                             value={negativePrompt}
                             onChange={(e) => setNegativePrompt(e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="text-label !text-white/80 block mb-2">Aspect Ratio</label>
+                        <label className="text-label block mb-2">Aspect Ratio</label>
                         <div className="flex gap-1">
                             <button
                                 onClick={() => { setWidth(1088); setHeight(1920); }}
@@ -168,7 +168,7 @@ export default function GenerationGate({
                 <div className="grid grid-cols-2 gap-4 mt-1 p-4 bg-white/[0.02] rounded-xl border border-white/5">
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">Multi-Cast (Size)</span>
+                            <span className="text-[10px] text-label !tracking-normal">Multi-Cast (Size)</span>
                             <span className="text-xs font-bold text-emerald-400">{batchSize}</span>
                         </div>
                         <input
@@ -180,7 +180,7 @@ export default function GenerationGate({
                     </div>
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">Iterations (Count)</span>
+                            <span className="text-[10px] text-label !tracking-normal">Iterations (Count)</span>
                             <span className="text-xs font-bold text-emerald-400">{batchCount}</span>
                         </div>
                         <input
