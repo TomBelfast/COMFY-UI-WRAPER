@@ -178,7 +178,7 @@ export default function CharacterWizard() {
                 </div>
             </div>
 
-            <div className="mb-12">
+            <div className="mb-6">
                 <WizardStepper
                     steps={STEPS}
                     currentStep={currentStep}
