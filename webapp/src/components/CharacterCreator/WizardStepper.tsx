@@ -8,7 +8,7 @@ interface WizardStepperProps {
 
 export default function WizardStepper({ steps, currentStep, onStepClick }: WizardStepperProps) {
     return (
-        <div className="w-full flex items-center justify-between px-10 relative">
+        <div className="w-full flex items-center justify-between px-10 relative pb-10">
             {/* Progress Track (Background Line) */}
             <div className="absolute left-[3rem] right-[3rem] top-1/2 -translate-y-1/2 h-0.5 bg-white/10 -z-10">
                 {/* Active Line Progress */}

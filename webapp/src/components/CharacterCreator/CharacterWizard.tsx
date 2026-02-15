@@ -178,11 +178,13 @@ export default function CharacterWizard() {
                 </div>
             </div>
 
-            <WizardStepper
-                steps={STEPS}
-                currentStep={currentStep}
-                onStepClick={goToStep}
-            />
+            <div className="mb-12">
+                <WizardStepper
+                    steps={STEPS}
+                    currentStep={currentStep}
+                    onStepClick={goToStep}
+                />
+            </div>
 
             <div className="relative group">
                 {/* Navigation - BACK */}
