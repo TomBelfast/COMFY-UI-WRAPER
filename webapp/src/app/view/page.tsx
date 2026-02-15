@@ -137,26 +137,26 @@ function ViewContent() {
 
             {/* Matrix Stylized Controls */}
             {!isZoomed && (
-                <div className="absolute bottom-10 flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <div className="absolute bottom-12 flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
                     <button
                         id="btn-confirm-selection"
-                        className="px-12 py-4 bg-emerald-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.6)] hover:bg-emerald-400 transition-all active:scale-95 group relative overflow-hidden"
+                        className="px-16 py-5 bg-black/60 hover:bg-emerald-500/5 text-emerald-400 text-[11px] font-black italic uppercase tracking-[0.4em] rounded-xl border border-emerald-500/20 hover:border-emerald-400 transition-all duration-300 backdrop-blur-3xl group/btn relative overflow-hidden flex items-center justify-center min-w-[320px] shadow-[0_0_50px_rgba(0,0,0,0.5)]"
                         onClick={() => {
                             localStorage.setItem("wizard_selected_image", JSON.stringify(current));
                             window.close();
                         }}
                     >
-                        <span className="relative z-10">Confirm_Selection</span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    </button>
+                        {/* Tactical Accents */}
+                        <div className="absolute top-0 left-0 w-2 h-[1px] bg-emerald-500/50" />
+                        <div className="absolute top-0 left-0 w-[1px] h-2 bg-emerald-500/50" />
+                        <div className="absolute bottom-0 right-0 w-2 h-[1px] bg-emerald-500/50" />
+                        <div className="absolute bottom-0 right-0 w-[1px] h-2 bg-emerald-500/50" />
 
-                    <div className="px-8 py-3 bg-black/40 rounded-full backdrop-blur-3xl border border-white/5 flex items-center gap-4">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-                        <span className="text-emerald-500 font-mono text-[10px] tracking-[0.6em] uppercase font-black">
-                            PHASE_VARIANT: {index + 1} // {images.length}
-                        </span>
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-                    </div>
+                        <span className="relative z-10 transition-transform duration-300 group-hover:scale-105">Confirm Selection</span>
+
+                        {/* Scanning Line */}
+                        <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-emerald-500 group-hover/btn:w-full transition-all duration-500 shadow-[0_0_15px_rgba(16,185,129,1)]" />
+                    </button>
                 </div>
             )}
         </div>

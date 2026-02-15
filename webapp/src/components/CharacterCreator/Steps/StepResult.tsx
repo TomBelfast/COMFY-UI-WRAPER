@@ -178,7 +178,7 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                     Character record saved successfully // ID #{selectedImage.id}
                 </p>
 
-                <div className="flex gap-4">
+                <div className="flex gap-6">
                     <button
                         onClick={() => {
                             setSelectedImage(null);
@@ -186,15 +186,26 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                                 localStorage.removeItem("wizard_selected_image");
                             } catch (e) { }
                         }}
-                        className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest rounded-2xl border border-white/10 transition-all"
+                        className="px-10 py-5 bg-black/60 hover:bg-white/5 text-white/70 hover:text-white text-[11px] font-black italic uppercase tracking-[0.4em] rounded-xl border border-white/5 hover:border-white/20 transition-all duration-300 backdrop-blur-3xl group/btn relative overflow-hidden flex items-center justify-center min-w-[240px]"
                     >
-                        Change Variant
+                        <div className="absolute top-0 left-0 w-2 h-[1px] bg-white/20" />
+                        <div className="absolute top-0 left-0 w-[1px] h-2 bg-white/20" />
+                        <div className="absolute bottom-0 right-0 w-2 h-[1px] bg-white/20" />
+                        <div className="absolute bottom-0 right-0 w-[1px] h-2 bg-white/20" />
+                        <span className="relative z-10">Abort Selection</span>
+                        <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-white group-hover/btn:w-full transition-all duration-500 shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
                     </button>
+
                     <button
                         onClick={() => window.location.reload()}
-                        className="px-12 py-4 bg-emerald-500 text-black font-black uppercase tracking-widest rounded-2xl shadow-2xl hover:bg-emerald-400 transition-all font-black"
+                        className="px-12 py-5 bg-black/60 hover:bg-emerald-500/5 text-emerald-400 text-[11px] font-black italic uppercase tracking-[0.4em] rounded-xl border border-emerald-500/20 hover:border-emerald-500/50 transition-all duration-300 backdrop-blur-3xl group/btn relative overflow-hidden flex items-center justify-center min-w-[260px]"
                     >
-                        New Generation
+                        <div className="absolute top-0 left-0 w-2 h-[1px] bg-emerald-500/50" />
+                        <div className="absolute top-0 left-0 w-[1px] h-2 bg-emerald-500/50" />
+                        <div className="absolute bottom-0 right-0 w-2 h-[1px] bg-emerald-500/50" />
+                        <div className="absolute bottom-0 right-0 w-[1px] h-2 bg-emerald-500/50" />
+                        <span className="relative z-10">New Simulation</span>
+                        <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-emerald-500 group-hover/btn:w-full transition-all duration-500 shadow-[0_0_15px_rgba(16,185,129,1)]" />
                     </button>
                 </div>
             </div>
@@ -256,9 +267,21 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
                                         <button
                                             id={`select-variant-${img.id}`}
                                             onClick={() => handleSelect(img)}
-                                            className="w-full py-4 bg-emerald-500 text-black text-xs font-black uppercase tracking-widest rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]"
+                                            className="w-full py-5 bg-black/60 hover:bg-emerald-500/5 text-emerald-400 text-[11px] font-black italic uppercase tracking-[0.4em] rounded-xl border border-white/5 hover:border-emerald-500/50 transition-all duration-300 backdrop-blur-3xl group/btn relative overflow-hidden flex items-center justify-center gap-3"
                                         >
-                                            Choose Variant
+                                            {/* Tactical Accents */}
+                                            <div className="absolute top-0 left-0 w-2 h-[1px] bg-emerald-500/50" />
+                                            <div className="absolute top-0 left-0 w-[1px] h-2 bg-emerald-500/50" />
+                                            <div className="absolute bottom-0 right-0 w-2 h-[1px] bg-emerald-500/50" />
+                                            <div className="absolute bottom-0 right-0 w-[1px] h-2 bg-emerald-500/50" />
+
+                                            {/* Glow effect on hover */}
+                                            <div className="absolute inset-0 bg-emerald-500/0 group-hover/btn:bg-emerald-500/5 transition-colors" />
+
+                                            <span className="relative z-10 group-hover/btn:scale-105 transition-transform duration-300">Select Identity</span>
+
+                                            {/* Scanning Line */}
+                                            <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-emerald-500 group-hover/btn:w-full transition-all duration-500 shadow-[0_0_15px_rgba(16,185,129,1)]" />
                                         </button>
                                     </div>
                                 </div>
@@ -301,9 +324,26 @@ export default function StepResult({ prompt, onBack, onGeneratingChange }: StepR
             <div className="shrink-0 z-20">
                 <button
                     onClick={() => logic.handleGenerate()}
-                    className={`px-12 py-4 rounded-xl font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 text-sm shadow-[0_0_30px_rgba(16,185,129,0.1)] hover:shadow-[0_0_50px_rgba(16,185,129,0.2)] ${logic.isGenerating ? 'snake-active' : ''}`}
+                    className={`px-16 py-5 rounded-xl text-emerald-400 text-[11px] font-black italic uppercase tracking-[0.4em] bg-black/60 hover:bg-emerald-500/10 transition-all duration-300 border border-emerald-500/20 hover:border-emerald-500/50 backdrop-blur-3xl group/btn relative overflow-hidden flex items-center justify-center min-w-[320px] ${logic.isGenerating ? 'snake-active' : ''}`}
+                    style={{ '--snake-radius': '12px' } as React.CSSProperties}
                 >
-                    {logic.isGenerating ? 'Decoding...' : 'Generate More Variants'}
+                    {/* Tactical Accents */}
+                    {!logic.isGenerating && (
+                        <>
+                            <div className="absolute top-0 left-0 w-2 h-[1px] bg-emerald-500/50" />
+                            <div className="absolute top-0 left-0 w-[1px] h-2 bg-emerald-500/50" />
+                            <div className="absolute bottom-0 right-0 w-2 h-[1px] bg-emerald-500/50" />
+                            <div className="absolute bottom-0 right-0 w-[1px] h-2 bg-emerald-500/50" />
+                        </>
+                    )}
+
+                    <span className="relative z-10">
+                        {logic.isGenerating ? 'Decoding Stream...' : 'Initialize Evolution'}
+                    </span>
+
+                    {!logic.isGenerating && (
+                        <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-emerald-500 group-hover/btn:w-full transition-all duration-500 shadow-[0_0_15px_rgba(16,185,129,1)]" />
+                    )}
                 </button>
             </div>
         </div>

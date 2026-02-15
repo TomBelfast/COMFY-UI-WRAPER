@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from PIL import Image
 from loguru import logger
 
-from database import get_db, AppConfig, User
+from database import get_db, AppConfig, User, GalleryImage
 from schemas.comfy_schemas import ImageGenerateRequest, ImageStatusResponse
 from services.workflow_service import build_comfy_workflow
 from services.websocket_manager import get_manager
@@ -246,10 +246,34 @@ async def check_status(prompt_id: str, db: Session = Depends(get_db), user: User
             if first_filename:
                 gallery_entry = db.query(GalleryImage).filter(GalleryImage.prompt_id == prompt_id).first()
                 if not gallery_entry:
-                    logger.warning(f"STATUS: Prompt {prompt_id} done in Comfy, but NOT YET in Gallery DB. Returning 'processing' to buy time.")
+                    logger.warning(f"STATUS: Prompt {prompt_id} done in Comfy, but NOT YET in Gallery DB. Attempting MANUAL trigger of auto-save.")
+                    # FALLBACK: Trigger save manually if WebSocket missed it
+                    try:
+                        ws_manager = get_manager(url)
+                        # We need metadata to save properly. 
+                        # If it's not in cache (e.g. server restart), we'll try to reconstruct minimal metadata
+                        if prompt_id not in ws_manager.metadata_cache:
+                            logger.info(f"STATUS: Reconstructing minimal metadata for prompt {prompt_id}")
+                            ws_manager.metadata_cache[prompt_id] = {
+                                "user_id": user.id,
+                                "workflow_id": "unknown_restored",
+                                "prompt_positive": "Restored after restart",
+                                "model": "unknown",
+                            }
+                        
+                        # Trigger save logic
+                        await ws_manager._auto_save_images(prompt_id, outputs)
+                        
+                        # Check again
+                        gallery_entry = db.query(GalleryImage).filter(GalleryImage.prompt_id == prompt_id).first()
+                    except Exception as fallback_err:
+                        logger.error(f"STATUS: Manual save fallback failed: {fallback_err}")
+
+                if not gallery_entry:
+                    logger.warning(f"STATUS: Still not in Gallery DB. Returning 'saving' status.")
                     return ImageStatusResponse(
                         prompt_id=prompt_id,
-                        status="saving", # Special status to indicate it's done but being saved
+                        status="saving",
                         ready=False
                     )
 

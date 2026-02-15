@@ -33,7 +33,7 @@ const STEPS = [
     "Physics",
     "Hair",
     "Body",
-    "Result"
+    "Evolution"
 ];
 
 export default function CharacterWizard() {
@@ -161,7 +161,7 @@ export default function CharacterWizard() {
         { title: "DEFINE", highlight: "PHYSICS" },
         { title: "MANUFACTURE", highlight: "HAIR" },
         { title: "RECONSTRUCT", highlight: "BODY" },
-        { title: "MATRIX", highlight: "RESULT" }
+        { title: "INITIALIZE", highlight: "EVOLUTION" }
     ];
 
     return (
