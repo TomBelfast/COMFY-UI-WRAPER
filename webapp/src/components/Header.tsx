@@ -9,7 +9,7 @@ import SettingsModal from "./SettingsModal";
 import { useAuth } from "./AuthProvider";
 
 interface ComfyStatus {
-    status: "connected" | "disconnected" | "checking";
+    status: "connected" | "disconnected" | "checking" | string;
     comfyui_url?: string;
     devices?: { name: string; type: string; vram_total?: number; vram_free?: number }[];
 }
@@ -39,13 +39,13 @@ export default function Header() {
         return () => clearInterval(interval);
     }, []);
 
-    const statusColors = {
+    const statusColors: Record<string, string> = {
         connected: "bg-emerald-500",
         disconnected: "bg-red-500",
         checking: "bg-yellow-500",
     };
 
-    const statusLabels = {
+    const statusLabels: Record<string, string> = {
         connected: "ComfyUI Online",
         disconnected: "ComfyUI Offline",
         checking: "Checking...",
@@ -202,6 +202,13 @@ export default function Header() {
                                 }`}
                         >
                             Character
+                        </Link>
+                        <Link
+                            href="/podcast"
+                            className={`px-4 h-full flex items-center text-label !tracking-widest rounded-lg transition-all ${pathname === "/podcast" ? "!text-emerald-400 bg-white/5 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)]" : "text-white/40 hover:text-white hover:bg-white/5"
+                                }`}
+                        >
+                            Podcast
                         </Link>
 
                         <div className="w-px h-4 bg-white/10 mx-2" />
